@@ -1,0 +1,17 @@
+export default {
+  title: '前端 JS 错误',
+  lastRefresh: '最后刷新:{time}',
+  loading: '加载中…',
+  refresh: '刷新',
+  timeRange: '时间范围',
+  totalErrors: '总错误数',
+  affectedUsers: '受影响用户',
+  distinctErrors: '不同错误数',
+  loadError: '加载错误',
+  thMessage: '错误消息',
+  thHits: '命中',
+  thUsers: '用户',
+  thRecent: '最近',
+  emptyText: '过去 {range} 没有前端错误',
+  emptyHint: '(前端通过 sidepanel-shared/error-reporter.js 自动上报 window.error + unhandledrejection 到 POST /errors/client。本页是该端点的聚合视图。)',
+}

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>DingQ Voice Recorder</title>
+</head>
+<body>
+  <!--
+    Offscreen document(USER_MEDIA reason)— 不可见,只为承载 navigator.mediaDevices
+    的麦克风访问。sidepanel(chrome-extension:// origin)默认无法 getUserMedia,
+    必须委托到 offscreen。Chrome 在 offscreen+USER_MEDIA 上下文中会正确弹原生权限弹窗。
+  -->
+  <script src="recorder.js"></script>
+</body>
+</html>

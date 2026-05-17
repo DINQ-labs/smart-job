@@ -1,0 +1,36 @@
+# 招聘方"消息"页全局聊天列表
+# 当前已有同名静态命令（job-seeker-ext/commands/candidates.js + commands.py:cmd_recruiter_chat_list）。
+# 这份 yaml 作为模板示范，**不会**实际生效（registry.js 会拒动态命令覆盖静态）。
+# 真正用途：Phase 2 时 promote_to_static.py 反向生成静态代码的"配方"，
+# 或者作为新写命令的 reference。
+path: boss/recruiter_chat_list
+description: |
+  招聘方"消息"页全局聊天列表（POST filterByLabel + encJobId="" 不绑定职位）。
+  返回 zpData.result[]：稀疏字段（friendId/encryptFriendId/updateTime/waterLevel +
+  labelId=0 偶有 name），详情通过 boss_view_geek_detail 等懒加载。
+  labelId 取值：0=全部 / 1=默认聊天 tab / 2-11=用户在 Boss UI 自定义的标签。
+
+mcp:
+  name: boss_recruiter_chat_list
+  params:
+    - {name: label_id, type: int, default: 0,  required: false}
+    - {name: sort,     type: str, default: "", required: false}
+
+requires: null
+produces: null
+
+requestBuilder:
+  method: POST
+  url: /wapi/zprelation/friend/filterByLabel
+  contentType: form
+  body:
+    labelId: "{{body.label_id}}"
+    encJobId: ""
+    sort: "{{body.sort}}"
+
+metadata:
+  owner: hyh
+  source_capture: rec_1777123250260
+  added_at: 2026-04-26
+  promoted_at: 2026-04-26    # 这条已经是 static，仅作 reference
+  retired_at: null

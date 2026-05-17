@@ -1,0 +1,18 @@
+export default {
+  title: 'CLI 池管理',
+  subtitle: 'boss-cli-server（httpx 无浏览器）',
+  refresh: '刷新',
+  processCount: '进程数',
+  loadedAccounts: '已加载账号',
+  noProcesses: '暂无 CLI 进程连接。',
+  runHint1: '运行',
+  runHint2: '启动。',
+  connectedAt: '连接于 {time}',
+  connected: '已连接',
+  sendCommand: '发送命令',
+  refreshLoadedAccounts: '刷新已加载账号',
+  loadedAccountsCookieId: '已加载账号 (cookie_id)',
+  loading: '加载中…',
+  clickToQuery: '点击 ↻ 查询',
+  noneNoRequests: '无（尚未处理任何请求）',
+}

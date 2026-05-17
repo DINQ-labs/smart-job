@@ -1,0 +1,36 @@
+/* reset.css — minimal modern reset,不引第三方 normalize. */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--fw-normal);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body { height: 100vh; overflow: hidden; }
+
+button, input, select, textarea {
+  font: inherit; color: inherit;
+}
+button { background: none; border: 0; cursor: pointer; padding: 0; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+img { max-width: 100%; display: block; }
+
+/* 隐藏 webkit number 增减按钮 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* 滚动条(slate 化) */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--slate-300);
+  border-radius: var(--rd-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }

@@ -1,0 +1,14 @@
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/node_modules
+**/dist
+**/logs
+**/uploads
+**/.git
+**/.env
+**/*.db
+**/*.db-*
+**/keys/*.pem

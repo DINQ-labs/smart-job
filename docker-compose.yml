@@ -1,0 +1,96 @@
+# smart-job —— 一键拉起完整本地栈：postgres + redis + 3 个后端 + admin
+#
+#   cp .env.example .env   # 按需填 OPENROUTER_API_KEY 等
+#   docker compose up -d --build
+#
+# 端口：admin http://localhost:8080  ·  api-gw :8767  ·  agent-gw :8769
+#       portal-api :8771  ·  postgres :5433  ·  redis :6380
+name: smart-job
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  api-gateway:
+    build:
+      context: ./packages
+      dockerfile: api-gateway/Dockerfile
+    environment:
+      BOSS_GATEWAY_PORT: "8767"
+      DB_BACKEND: postgres
+      DB_POSTGRES_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/boss_gateway
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    ports:
+      - "8767:8767"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  agent-gateway:
+    build:
+      context: ./packages
+      dockerfile: agent-gateway/Dockerfile
+    environment:
+      AGENT_GW_PORT: "8769"
+      DB_POSTGRES_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/boss_gateway
+      REDIS_URL: redis://redis:6379/0
+      JOB_API_GATEWAY_URL: http://api-gateway:8767
+      JOB_PORTAL_API_URL: http://portal-api:8771
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    ports:
+      - "8769:8769"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  portal-api:
+    build:
+      context: ./packages/portal-api
+      dockerfile: Dockerfile
+    environment:
+      PORT: "8771"
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/smart_job
+      APP_ENV: development
+    ports:
+      - "8771:8771"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  admin:
+    build:
+      context: ./packages/admin
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-gateway
+      - agent-gateway
+      - portal-api
+
+volumes:
+  pgdata:

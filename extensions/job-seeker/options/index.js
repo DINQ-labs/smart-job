@@ -1,0 +1,254 @@
+/*
+ * options/index.js — 设置页：后端地址（portal-api / api-gw / agent-gw 各自独立填写）+ 账号状态
+ *
+ * 三个后端地址各用一个输入框单独设置，存到 chrome.storage.local：
+ *   portalApiUrl  账号 / 鉴权     (job-portal-api,    默认 https://api.job.joyhouse.chat)
+ *   apiGwUrl      命令网关 / WS   (job-api-gateway,   默认 https://control.job.joyhouse.chat)
+ *   agentGwUrl    Agent 对话/录制 (job-agent-gateway, 默认 https://agent.job.joyhouse.chat)
+ *
+ * 各消费方（sidepanel/shared/api.js、auth-api.js、background/index.js、
+ * lib/recorder/recorder-bg.js、lib/ext-core/core/task-monitor.js、
+ * lib/autofill/autofill-bg.js）优先读这三个 key；为空时回退到旧的 gatewayHost 推导，
+ * 对老安装向下兼容。
+ */
+(function () {
+  'use strict';
+
+  // 预设：一键填好三个地址
+  const PRESETS = {
+    localhost: {
+      portalApiUrl: 'http://127.0.0.1:8771',
+      apiGwUrl:     'http://127.0.0.1:8767',
+      agentGwUrl:   'http://127.0.0.1:8769',
+    },
+    prod: {
+      portalApiUrl: 'https://api.job.joyhouse.chat',
+      apiGwUrl:     'https://control.job.joyhouse.chat',
+      agentGwUrl:   'https://agent.job.joyhouse.chat',
+    },
+  };
+
+  const els = {
+    presetRow:  document.getElementById('presetRow'),
+    portalApi:  document.getElementById('portalApiUrl'),
+    apiGw:      document.getElementById('apiGwUrl'),
+    agentGw:    document.getElementById('agentGwUrl'),
+    saveBtn:    document.getElementById('saveBtn'),
+    pingBtn:    document.getElementById('pingBtn'),
+    savedTip:   document.getElementById('savedTip'),
+    healthRows: document.getElementById('healthRows'),
+    accountRow: document.getElementById('accountRow'),
+  };
+
+  const norm = (s) => (s || '').trim().replace(/\/+$/, '');
+
+  // ── 老安装迁移：没存过显式 URL 时，按旧的 gatewayHost 推导一次 ─────────
+  function isLocal(host) { return /^(127\.0\.0\.1|localhost)/.test(host); }
+  function hostNoPort(host) { return (host || '').split(':')[0]; }
+  function derivePortalApi(host) {
+    return isLocal(host) ? `http://${hostNoPort(host)}:8771` : PRESETS.prod.portalApiUrl;
+  }
+  function deriveApiGw(host) {
+    return isLocal(host) ? `http://${hostNoPort(host)}:8767` : PRESETS.prod.apiGwUrl;
+  }
+  function deriveAgentGw(host) {
+    return isLocal(host) ? `http://${hostNoPort(host)}:8769` : PRESETS.prod.agentGwUrl;
+  }
+
+  function syncPresetActive() {
+    const cur = {
+      portalApiUrl: norm(els.portalApi.value),
+      apiGwUrl:     norm(els.apiGw.value),
+      agentGwUrl:   norm(els.agentGw.value),
+    };
+    let matched = 'custom';
+    for (const key of ['localhost', 'prod']) {
+      const p = PRESETS[key];
+      if (p.portalApiUrl === cur.portalApiUrl &&
+          p.apiGwUrl === cur.apiGwUrl &&
+          p.agentGwUrl === cur.agentGwUrl) { matched = key; break; }
+    }
+    els.presetRow.querySelectorAll('button').forEach((b) => {
+      b.classList.toggle('active', b.dataset.preset === matched);
+    });
+  }
+
+  // ── 加载 / 保存 ─────────────────────────────────────────────────
+  async function load() {
+    const r = await chrome.storage.local.get(['portalApiUrl', 'apiGwUrl', 'agentGwUrl', 'gatewayHost']);
+    const host = r.gatewayHost || '127.0.0.1';
+    els.portalApi.value = r.portalApiUrl || derivePortalApi(host);
+    els.apiGw.value     = r.apiGwUrl     || deriveApiGw(host);
+    els.agentGw.value   = r.agentGwUrl   || deriveAgentGw(host);
+    syncPresetActive();
+    await renderAccount();
+  }
+
+  async function save() {
+    const portalApiUrl = norm(els.portalApi.value) || PRESETS.prod.portalApiUrl;
+    const apiGwUrl     = norm(els.apiGw.value)     || PRESETS.prod.apiGwUrl;
+    const agentGwUrl   = norm(els.agentGw.value)   || PRESETS.prod.agentGwUrl;
+    // gatewayHost：从 api-gw URL 抽出主机名，供未迁移的消费方判断"本地与否"（向下兼容）
+    let gatewayHost = '127.0.0.1';
+    try { gatewayHost = new URL(apiGwUrl).hostname || '127.0.0.1'; } catch (_) {}
+    await chrome.storage.local.set({ portalApiUrl, apiGwUrl, agentGwUrl, gatewayHost });
+    els.portalApi.value = portalApiUrl;
+    els.apiGw.value = apiGwUrl;
+    els.agentGw.value = agentGwUrl;
+    syncPresetActive();
+    flash(t('options.flash.saved'));
+  }
+
+  function flash(msg) {
+    els.savedTip.textContent = msg;
+    els.savedTip.classList.remove('hidden');
+    clearTimeout(flash._t);
+    flash._t = setTimeout(() => els.savedTip.classList.add('hidden'), 2200);
+  }
+
+  // ── 测试三个后端连通性 ──────────────────────────────────────────
+  // agent-gw 无 /health,用 /resume/status 做存活探测。
+  const GATEWAYS = [
+    { name: 'portal-api', el: () => els.portalApi, path: '/health',
+      ok: (b) => !!b.ok,
+      label: (b) => `${b.service || ''} v${b.version || '?'} · db=${b.db || '?'}` },
+    { name: 'api-gw', el: () => els.apiGw, path: '/health',
+      ok: (b) => b.status === 'ok' || !!b.ok,
+      label: (b) => b.service || 'ok' },
+    { name: 'agent-gw', el: () => els.agentGw, path: '/resume/status?user_id=__probe__',
+      ok: (b) => !!b.ok,
+      label: () => t('options.agent.ok') },
+  ];
+
+  async function pingAll() {
+    els.healthRows.hidden = false;
+    els.healthRows.innerHTML = GATEWAYS.map((g, i) =>
+      `<div class="health-row">
+         <span class="health-dot" id="hd${i}"></span>
+         <span id="hm${i}">${g.name} ${t('options.ping.testing')}</span>
+       </div>`).join('');
+    await Promise.all(GATEWAYS.map(async (g, i) => {
+      const dot = document.getElementById('hd' + i);
+      const msg = document.getElementById('hm' + i);
+      const base = norm(g.el().value);
+      if (!base) {
+        dot.className = 'health-dot down';
+        msg.textContent = `${g.name} ${t('options.ping.empty')}`;
+        return;
+      }
+      const url = `${base}${g.path}`;
+      try {
+        const t0 = Date.now();
+        const resp = await fetch(url, { method: 'GET' });
+        const ms = Date.now() - t0;
+        const body = await resp.json().catch(() => ({}));
+        const ok = resp.ok && g.ok(body);
+        dot.className = 'health-dot ' + (ok ? 'up' : 'down');
+        msg.textContent = ok
+          ? `${g.name} ✓ ${resp.status} · ${g.label(body)} · ${ms}ms`
+          : `${g.name} ✗ ${resp.status} · ${JSON.stringify(body).slice(0, 80)}`;
+      } catch (e) {
+        dot.className = 'health-dot down';
+        msg.textContent = `${g.name} ✗ ${e.message || e}`;
+      }
+    }));
+  }
+
+  // ── 账号状态（依赖 sidepanel/shared/auth-api.js 已经 importScripts）──
+  async function renderAccount() {
+    const authApi = window.DQ?.authApi;
+    if (!authApi) {
+      els.accountRow.innerHTML = `<div class="info"><span class="placeholder">${t('options.account.notLoaded')}</span></div>`;
+      return;
+    }
+    const a = await authApi.loadAuth();
+    if (!a || !a.accessToken) {
+      els.accountRow.innerHTML = `
+        <div class="info"><span class="placeholder">${t('options.account.notLogin')}</span></div>
+        <button class="btn-secondary" id="openSpBtn" type="button">${t('options.btn.openSp')}</button>
+      `;
+      document.getElementById('openSpBtn')?.addEventListener('click', () => {
+        // 不能直接打开 sidepanel UI（chrome API 限制），引导用户点击工具栏图标
+        alert(t('options.alert.openSp'));
+      });
+      return;
+    }
+
+    const u = a.user || {};
+    const expSec = (a.accessExpiresAt || 0) - Math.floor(Date.now() / 1000);
+    const expHint = expSec > 60
+      ? t('options.expiry.ok', { min: Math.floor(expSec / 60) })
+      : expSec > 0
+      ? t('options.expiry.soon', { sec: expSec })
+      : t('options.expiry.expired');
+
+    els.accountRow.innerHTML = `
+      <div class="info">
+        <span class="email">${escapeHtml(u.email || '(no email)')}</span>
+        <span class="uid">id=${escapeHtml(u.id || '')} · ${expHint}</span>
+      </div>
+      <div style="display:flex;gap:var(--sp-2)">
+        <button class="btn-secondary" id="refreshNowBtn" type="button" title="${t('options.btn.refreshToken.title')}">${t('options.btn.refreshToken')}</button>
+        <button class="btn-danger" id="logoutBtn" type="button">${t('options.btn.logout')}</button>
+      </div>
+    `;
+    document.getElementById('refreshNowBtn')?.addEventListener('click', async (e) => {
+      e.currentTarget.disabled = true;
+      try {
+        await authApi.refresh();
+        flash(t('options.flash.refreshed'));
+      } catch (err) {
+        flash(t('options.flash.refreshFail') + (err.message || err));
+      } finally {
+        await renderAccount();
+      }
+    });
+    document.getElementById('logoutBtn')?.addEventListener('click', async (e) => {
+      e.currentTarget.disabled = true;
+      try {
+        await authApi.logout({ all_devices: false });
+        flash(t('options.flash.loggedOut'));
+      } catch (err) {
+        flash(t('options.flash.logoutFail') + (err.message || err));
+      } finally {
+        await renderAccount();
+      }
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── 事件 ────────────────────────────────────────────────────────
+  [els.portalApi, els.apiGw, els.agentGw].forEach((inp) => {
+    inp.addEventListener('input', syncPresetActive);
+  });
+  els.presetRow.querySelectorAll('button').forEach((b) => {
+    b.addEventListener('click', () => {
+      const key = b.dataset.preset;
+      if (key === 'custom') { els.portalApi.focus(); return; }
+      const p = PRESETS[key];
+      if (!p) return;
+      els.portalApi.value = p.portalApiUrl;
+      els.apiGw.value = p.apiGwUrl;
+      els.agentGw.value = p.agentGwUrl;
+      syncPresetActive();
+    });
+  });
+  els.saveBtn.addEventListener('click', save);
+  els.pingBtn.addEventListener('click', pingAll);
+
+  // 当 sidepanel 完成登录/登出后 storage 变了，options 页里同步刷新
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+    if (changes.auth) renderAccount();
+    if (changes.portalApiUrl || changes.apiGwUrl || changes.agentGwUrl) load();
+  });
+
+  window.DQI18N.ready.then(function () { load(); });
+})();

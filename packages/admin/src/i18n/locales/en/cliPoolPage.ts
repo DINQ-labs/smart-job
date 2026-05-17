@@ -1,0 +1,18 @@
+export default {
+  title: 'CLI Pool Management',
+  subtitle: 'boss-cli-server (httpx, no browser)',
+  refresh: 'Refresh',
+  processCount: 'Processes',
+  loadedAccounts: 'Loaded Accounts',
+  noProcesses: 'No CLI processes connected.',
+  runHint1: 'Run',
+  runHint2: 'to start.',
+  connectedAt: 'Connected at {time}',
+  connected: 'Connected',
+  sendCommand: 'Send Command',
+  refreshLoadedAccounts: 'Refresh loaded accounts',
+  loadedAccountsCookieId: 'Loaded Accounts (cookie_id)',
+  loading: 'Loading…',
+  clickToQuery: 'Click ↻ to query',
+  noneNoRequests: 'None (no requests processed yet)',
+}

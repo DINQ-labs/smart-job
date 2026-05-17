@@ -1,0 +1,24 @@
+# 验证动态命令链路是否通畅 —— 推一个无副作用的 GET。
+# 工程师跑 e2e 时常用：
+#   1. python scripts/sync_dynamic_to_db.py --gateway ... --token ...
+#   2. 在扩展 popup 里点 boss/test_ping，应能返回 wt token JSON。
+# 这是 Phase 1a/1b 验证用的。生产价值有限，但永久留着方便排障。
+path: boss/test_ping
+description: |
+  动态命令链路自检（无副作用）。GET /wapi/zppassport/get/wt 拉一个 wt token，
+  纯粹验证 gateway → ext config_update → registerDynamicCommand → dispatch
+  → executeBossApi 全链能跑。
+mcp:
+  name: boss_test_ping
+  params: []
+requires: null
+produces: null
+requestBuilder:
+  method: GET
+  url: /wapi/zppassport/get/wt
+metadata:
+  owner: hyh
+  source_capture: null
+  added_at: 2026-04-26
+  promoted_at: null
+  retired_at: null

@@ -1,0 +1,122 @@
+{
+  "manifest_version": 3,
+  "name": "DingQ v3",
+  "version": "3.1.0",
+  "description": "__MSG_appDesc__",
+  "default_locale": "zh_CN",
+  "background": { "service_worker": "background/index.js" },
+  "action": { "default_title": "DingQ v3", "default_popup": "popup/index.html" },
+  "options_ui": { "page": "options/index.html", "open_in_tab": true },
+  "side_panel": { "default_path": "sidepanel/index.html" },
+  "content_scripts": [
+    {
+      "matches": ["https://zhipin.com/*", "*://*.zhipin.com/*"],
+      "js": ["content/shared/stealth.js", "content/boss/interceptor_main.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://zhipin.com/*", "*://*.zhipin.com/*"],
+      "js": [
+        "lib/i18n/i18n.js",
+        "lib/i18n/dict/common.js",
+        "lib/i18n/dict/content.js",
+        "content/shared/interceptor.js",
+        "content/shared/page-context-extractor.js",
+        "content/shared/injection-widgets.js",
+        "content/boss/eval-inject.js",
+        "content/boss/inject.js"
+      ],
+      "run_at": "document_idle",
+      "world": "ISOLATED"
+    },
+    {
+      "matches": ["*://*.linkedin.com/*"],
+      "js": ["content/shared/stealth.js", "content/linkedin/interceptor_main.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["*://*.linkedin.com/*"],
+      "js": [
+        "lib/i18n/i18n.js",
+        "lib/i18n/dict/common.js",
+        "lib/i18n/dict/content.js",
+        "content/shared/interceptor.js",
+        "content/shared/page-context-extractor.js",
+        "content/shared/injection-widgets.js",
+        "content/linkedin/inject.js"
+      ],
+      "run_at": "document_idle",
+      "world": "ISOLATED"
+    },
+    {
+      "matches": ["*://*.indeed.com/*"],
+      "js": ["content/shared/stealth.js", "content/indeed/interceptor_main.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["*://*.indeed.com/*"],
+      "js": [
+        "lib/i18n/i18n.js",
+        "lib/i18n/dict/common.js",
+        "lib/i18n/dict/content.js",
+        "content/shared/interceptor.js",
+        "content/shared/page-context-extractor.js",
+        "content/shared/injection-widgets.js",
+        "content/indeed/inject.js"
+      ],
+      "run_at": "document_idle",
+      "world": "ISOLATED"
+    },
+    {
+      "matches": ["*://*.joyhouse.chat/*", "http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["content/dinq_probe.js"],
+      "run_at": "document_idle",
+      "world": "ISOLATED"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/autofill/detector.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "*://*.myworkdayjobs.com/*",
+        "*://*.workday.com/*",
+        "*://*.greenhouse.io/*",
+        "*://*.lever.co/*",
+        "*://*.icims.com/*",
+        "*://*.smartrecruiters.com/*",
+        "*://*.ashbyhq.com/*",
+        "*://*.workable.com/*",
+        "*://*.taleo.net/*",
+        "*://*.successfactors.com/*"
+      ],
+      "js": ["content/autofill/main-world/shadow-shim.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
+    }
+  ],
+  "permissions": [
+    "tabs", "scripting", "storage", "activeTab", "cookies",
+    "proxy", "sidePanel", "webRequest", "webNavigation", "alarms",
+    "notifications", "audioCapture", "offscreen", "debugger"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "ws://127.0.0.1:*/*", "http://127.0.0.1:*/*",
+    "wss://control.job.joyhouse.chat/*",
+    "https://control.job.joyhouse.chat/*",
+    "https://agent.job.joyhouse.chat/*",
+    "https://api.job.joyhouse.chat/*",
+    "https://job.joyhouse.chat/*",
+    "http://localhost/*", "http://127.0.0.1/*",
+    "*://zhipin.com/*", "*://*.zhipin.com/*",
+    "*://*.linkedin.com/*",
+    "*://*.indeed.com/*"
+  ]
+}

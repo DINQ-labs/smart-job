@@ -1,0 +1,5 @@
+# 全局元数据
+schema_version: "1.0"
+notes: |
+  Phase 1b 阶段：扩展端通过 config_update WS 接收。MCP 工具暴露要等 Phase 2。
+  详见 dynamic-commands/README.md

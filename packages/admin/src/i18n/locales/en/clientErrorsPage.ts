@@ -1,0 +1,17 @@
+export default {
+  title: 'Frontend JS Errors',
+  lastRefresh: 'Last refresh: {time}',
+  loading: 'Loading…',
+  refresh: 'Refresh',
+  timeRange: 'Time Range',
+  totalErrors: 'Total Errors',
+  affectedUsers: 'Affected Users',
+  distinctErrors: 'Distinct Errors',
+  loadError: 'Load Error',
+  thMessage: 'Error Message',
+  thHits: 'Hits',
+  thUsers: 'Users',
+  thRecent: 'Latest',
+  emptyText: 'No frontend errors in the past {range}',
+  emptyHint: '(The frontend auto-reports window.error + unhandledrejection via sidepanel-shared/error-reporter.js to POST /errors/client. This page is the aggregated view of that endpoint.)',
+}

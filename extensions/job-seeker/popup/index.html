@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>DingQ v3</title>
+<link rel="stylesheet" href="../sidepanel/styles/tokens.css">
+<link rel="stylesheet" href="../sidepanel/styles/reset.css">
+<link rel="stylesheet" href="../sidepanel/styles/components.css">
+<style>
+  body { width: 280px; padding: var(--sp-3); background: var(--surface); }
+  h2 { font-size: var(--text-md); font-weight: var(--fw-medium); margin: 0 0 var(--sp-2); }
+  .row { display: flex; flex-direction: column; gap: var(--sp-2); }
+</style>
+</head>
+<body>
+  <h2 data-i18n="popup.h2" style="display:flex;align-items:center;justify-content:space-between;">DingQ v3<button data-i18n-switch type="button" style="cursor:pointer;padding:2px 8px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:12px">中/EN</button></h2>
+  <div class="row">
+    <button class="btn primary" id="openPanel" data-i18n="popup.btn.panel">打开侧边栏</button>
+    <button class="btn" id="openOptions" data-i18n="popup.btn.options">设置</button>
+  </div>
+  <script src="/lib/i18n/i18n.js"></script>
+  <script src="/lib/i18n/dict/common.js"></script>
+  <script src="/lib/i18n/dict/popup.js"></script>
+  <script src="/lib/i18n/switcher.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>

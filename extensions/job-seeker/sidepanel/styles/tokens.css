@@ -1,0 +1,128 @@
+/*
+ * tokens.css — DESIGN.md §1-5 全集落 CSS 变量
+ *
+ * 单一来源:smart-job/DESIGN.md(从 plugin-ui-v3.html inline CSS 抽出)。
+ * 任何业务样式必须用 var(--xxx),不写 hex,不发明新色。
+ *
+ * 命名:跟 Tailwind 同位色对齐(--blue-50/200/600 等),可一比一映射 Tailwind 类。
+ */
+:root {
+  /* ── 字体栈(系统原生)─────────────────────────────── */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* ── 字重(无 regular,见 DESIGN.md §2.3)─────────── */
+  --fw-normal: 600;
+  --fw-medium: 700;
+  --fw-bold:   800;
+
+  /* ── 字号 scale ─────────────────────────────────── */
+  --text-micro:  10px;
+  --text-tiny:   11px;
+  --text-xs:     12px;
+  --text-sm:     13px;
+  --text-base:   14px;
+  --text-md:     15px;
+  --text-lg:     16px;
+  --text-lg-plus:17px;
+  --text-xl:     18px;
+  --text-2xl:    20px;
+  --text-3xl:    22px;
+  --text-4xl:    26px;
+  --text-5xl:    32px;
+  --text-display:48px;
+
+  /* ── 行高 ───────────────────────────────────────── */
+  --leading-tight:    1.3;
+  --leading-snug:     1.4;
+  --leading-normal:   1.5;
+  --leading-relaxed:  1.6;
+  --leading-bubble:   1.7;
+
+  /* ── 中性色 (Slate) ─────────────────────────────── */
+  --slate-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-700: #334155;
+  --slate-600: #475569;
+  --slate-500: #64748b;
+  --slate-400: #94a3b8;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+  --slate-50:  #f8fafc;
+  --gray-50:   #fafafa;
+  --surface-2: #e8ecf0;
+  --white:     #ffffff;
+
+  /* ── 语义色(每个 50/200/600 三档)─────────────── */
+  --blue-50:   #eff6ff;
+  --blue-200:  #bfdbfe;
+  --blue-600:  #2563eb;
+
+  --green-50:  #f0fdf4;
+  --green-200: #bbf7d0;
+  --green-600: #16a34a;
+
+  --amber-50:  #fffbeb;
+  --amber-200: #fde68a;
+  --amber-600: #d97706;
+
+  --red-50:    #fef2f2;
+  --red-200:   #fecaca;
+  --red-600:   #dc2626;
+
+  /* ── 透明叠加(深色面板上)─────────────────────── */
+  --dark-line:    rgba(255,255,255,0.06);
+  --dark-line-2:  rgba(255,255,255,0.08);
+  --dark-line-3:  rgba(255,255,255,0.10);
+  --dark-line-4:  rgba(255,255,255,0.15);
+
+  /* ── 间距 spacing(8px base + 细粒度)─────────── */
+  --sp-px:   1px;
+  --sp-0\.5: 2px;
+  --sp-1:    4px;
+  --sp-1\.5: 6px;
+  --sp-2:    8px;
+  --sp-2\.5: 10px;
+  --sp-3:    12px;
+  --sp-3\.5: 14px;
+  --sp-4:    16px;
+  --sp-5:    20px;
+  --sp-6:    24px;
+  --sp-8:    32px;
+  --sp-10:   40px;
+  --sp-12:   48px;
+  --sp-16:   64px;
+
+  /* ── 圆角 radius ────────────────────────────────── */
+  --rd-xs:   3px;
+  --rd-sm:   4px;
+  --rd:      6px;
+  --rd-md:   8px;
+  --rd-lg:   10px;
+  --rd-xl:   12px;
+  --rd-2xl:  16px;
+  --rd-3xl:  20px;
+  --rd-full: 9999px;
+
+  /* ── 阴影 shadow ────────────────────────────────── */
+  --shadow-line:  0 1px 0 rgba(255,255,255,0.06);
+  --shadow-card:  0 8px 32px rgba(15,23,42,0.12);
+  --shadow-modal: 0 4px 16px rgba(15,23,42,0.20);
+
+  /* ── 语义别名(给业务层用,屏蔽底层 token)──────── */
+  --bg:           var(--gray-50);
+  --surface:      var(--white);
+  --surface-alt:  var(--slate-50);
+  --ink:          var(--slate-900);
+  --ink-2:        var(--slate-700);
+  --muted:        var(--slate-500);
+  --muted-2:      var(--slate-400);
+  --border:       var(--slate-300);
+  --border-soft:  var(--slate-200);
+  --accent:       var(--blue-600);
+  --accent-bg:    var(--blue-50);
+  --accent-border:var(--blue-200);
+  --success:      var(--green-600);
+  --warning:      var(--amber-600);
+  --danger:       var(--red-600);
+}

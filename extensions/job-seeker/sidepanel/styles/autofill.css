@@ -1,0 +1,376 @@
+/*
+ * autofill.css — 「工具」tab + 「我的」tab 内嵌的「表单资料」样式
+ *
+ * 两类规则:
+ *   - 结构规则 限定在 #tab-tools 下(二级菜单 / 子视图容器)。
+ *   - 组件规则 限定在 .af-ui 下(card / btn / pf-* / rec-* …),
+ *     .af-ui 同时挂在「工具」的 .tools-pane 和「我的」内嵌的 #view-profile 上,
+ *     所以表单资料合并进「我的」后样式照常生效。
+ * 颜色一律走 tokens.css 的 CSS 变量(DESIGN.md 单一来源)。
+ */
+
+/* ── 工具 tab 结构 ──────────────────────────────────────── */
+/* .tab-pane(v3)默认 display:none;只在 .active 时按 flex 列布局展开,
+   用 #id.active 提高优先级压过 v3 的 .tab-pane.active。flex:1/min-height 继承自 .tab-pane。 */
+#tab-tools.active { display: flex; flex-direction: column; }
+
+#tab-tools .subnav {
+  display: flex;
+  gap: var(--sp-1);
+  padding: var(--sp-2);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-soft);
+  flex-shrink: 0;
+}
+#tab-tools .subnav-btn {
+  flex: 1;
+  padding: var(--sp-1\.5) var(--sp-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rd-md);
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: var(--text-tiny);
+  font-weight: var(--fw-normal);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  white-space: nowrap;
+}
+#tab-tools .subnav-btn.active {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+#tab-tools .tools-pane {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-3);
+}
+#tab-tools .tools-view { display: block; }
+
+/* ── 通用隐藏 ───────────────────────────────────────────── */
+.af-ui .hidden { display: none !important; }
+
+/* ── 卡片 ───────────────────────────────────────────────── */
+.af-ui .card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rd-xl);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+.af-ui .card-amber,
+.af-ui .card.card-amber {
+  background: var(--amber-50);
+  border-color: var(--amber-200);
+}
+.af-ui .card-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  margin-bottom: var(--sp-2);
+}
+.af-ui .pf-subhead {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-normal);
+  color: var(--muted);
+  margin: var(--sp-2) 0 var(--sp-1);
+}
+
+/* ── 按钮 ───────────────────────────────────────────────── */
+.af-ui .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--rd);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-normal);
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.af-ui .btn:hover { background: var(--surface-alt); }
+.af-ui .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.af-ui .btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
+}
+.af-ui .btn-primary:hover { background: var(--blue-600); filter: brightness(1.05); }
+.af-ui .btn-block { display: flex; width: 100%; margin-top: var(--sp-2); }
+
+/* ── 提示 / 空状态 ──────────────────────────────────────── */
+.af-ui .hint {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: var(--leading-normal);
+  margin-top: var(--sp-1);
+}
+.af-ui .empty {
+  text-align: center;
+  padding: var(--sp-6) var(--sp-3);
+  color: var(--muted-2);
+  font-size: var(--text-xs);
+}
+
+/* ── 输入控件 ───────────────────────────────────────────── */
+.af-ui .input {
+  width: 100%;
+  padding: var(--sp-2) var(--sp-2\.5);
+  border: 1px solid var(--border);
+  border-radius: var(--rd);
+  background: var(--white);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+}
+.af-ui .input:focus { outline: none; border-color: var(--accent); }
+.af-ui textarea.input { resize: vertical; }
+
+/* ── 匹配结果字段行 ─────────────────────────────────────── */
+.af-ui .field-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.af-ui .field-row:last-child { border-bottom: none; }
+.af-ui .field-row.is-low { background: var(--amber-50); }
+.af-ui .field-main { flex: 1; min-width: 0; }
+.af-ui .field-label { font-size: var(--text-xs); color: var(--muted); }
+.af-ui .field-value {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── chip ───────────────────────────────────────────────── */
+.af-ui .chip {
+  display: inline-block;
+  padding: 1px var(--sp-1\.5);
+  border-radius: var(--rd-xs);
+  font-size: var(--text-micro);
+  font-weight: var(--fw-normal);
+  white-space: nowrap;
+}
+.af-ui .chip-tpl   { background: var(--blue-50);  color: var(--blue-600); }
+.af-ui .chip-green { background: var(--green-50); color: var(--green-600); }
+.af-ui .chip-amber { background: var(--amber-50); color: var(--amber-600); }
+.af-ui .chip-red   { background: var(--red-50);   color: var(--red-600); }
+
+/* ── 缺字段补充 ─────────────────────────────────────────── */
+.af-ui .sup-row { margin-bottom: var(--sp-2); }
+.af-ui .sup-label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin-bottom: var(--sp-1);
+}
+.af-ui .req { color: var(--danger); }
+
+/* ── 表单资料：可折叠分区 ───────────────────────────────── */
+.af-ui .pf-row { margin-bottom: var(--sp-2); }
+.af-ui .pf-label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin-bottom: var(--sp-1);
+}
+.af-ui .pf-sec-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+}
+.af-ui .pf-sec-ico { font-size: var(--text-base); }
+.af-ui .pf-sec-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+.af-ui .pf-sec-meta {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.af-ui .pf-sec-arrow { color: var(--muted-2); font-size: var(--text-xs); }
+.af-ui .pf-sec-body { margin-top: var(--sp-3); }
+
+/* ── 简历 AI 解析结果 ───────────────────────────────────── */
+.af-ui .rz-status {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  padding: var(--sp-2) 0;
+}
+.af-ui .rz-status.rz-fail { color: var(--danger); }
+.af-ui .rz-block { margin-top: var(--sp-1); }
+.af-ui .rz-row {
+  display: flex;
+  gap: var(--sp-2);
+  padding: var(--sp-1\.5) 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: var(--text-xs);
+}
+.af-ui .rz-row:last-child { border-bottom: none; }
+.af-ui .rz-k { flex: 0 0 56px; color: var(--muted); }
+.af-ui .rz-v { flex: 1; min-width: 0; color: var(--ink); word-break: break-word; }
+.af-ui .rz-chips { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.af-ui .rz-sub {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+  margin: var(--sp-2\.5) 0 var(--sp-1);
+}
+.af-ui .rz-exp-item { margin-bottom: var(--sp-2); }
+.af-ui .rz-exp-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1\.5);
+  align-items: baseline;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  color: var(--ink);
+}
+.af-ui .rz-exp-dur { color: var(--muted-2); font-weight: var(--fw-normal); }
+.af-ui .rz-exp-desc {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: var(--leading-normal);
+  margin-top: var(--sp-px);
+}
+.af-ui .rz-self {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  line-height: var(--leading-normal);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── 填写记录 ───────────────────────────────────────────── */
+.af-ui .log-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-normal);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.af-ui .log-stats { display: flex; gap: var(--sp-1); margin-top: var(--sp-2); }
+
+/* ── API 录制 ───────────────────────────────────────────── */
+.af-ui .rec-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: var(--rd-full);
+  margin-left: var(--sp-1);
+  background: var(--slate-300);
+  vertical-align: middle;
+}
+.af-ui .rec-dot.online  { background: var(--green-600); }
+.af-ui .rec-dot.offline { background: var(--red-600); }
+.af-ui .rec-controls {
+  display: flex;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0;
+}
+.af-ui .rec-btn { flex: 1; padding: var(--sp-1\.5) var(--sp-1); font-size: var(--text-tiny); }
+.af-ui .rec-rec     { background: var(--green-600); border-color: var(--green-600); color: var(--white); }
+.af-ui .rec-stop    { background: var(--red-600);   border-color: var(--red-600);   color: var(--white); }
+.af-ui .rec-clear   { background: var(--amber-600); border-color: var(--amber-600); color: var(--white); }
+.af-ui .rec-flush   { background: var(--accent);    border-color: var(--accent);    color: var(--white); }
+/* hover：必须重申各自底色 —— 否则被 .btn:hover 的浅色背景盖掉，变成白底白字 */
+.af-ui .rec-rec:hover   { background: var(--green-600); filter: brightness(1.08); }
+.af-ui .rec-stop:hover  { background: var(--red-600);   filter: brightness(1.08); }
+.af-ui .rec-clear:hover { background: var(--amber-600); filter: brightness(1.08); }
+.af-ui .rec-flush:hover { background: var(--accent);    filter: brightness(1.08); }
+.af-ui .rec-btn:disabled:hover { filter: none; }
+.af-ui .rec-namebar {
+  display: flex;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-2);
+}
+.af-ui .rec-namebar .input { flex: 1; }
+.af-ui .rec-namebar .btn { white-space: nowrap; }
+.af-ui .rec-status {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  padding: var(--sp-1) 0;
+}
+.af-ui .rec-on   { color: var(--danger); font-weight: var(--fw-medium); }
+.af-ui .rec-idle { color: var(--success); }
+.af-ui .rec-filter {
+  display: flex;
+  gap: var(--sp-1);
+  margin-top: var(--sp-2);
+}
+.af-ui .rec-filter .input { flex: 1; }
+.af-ui .rec-filter .btn { white-space: nowrap; }
+.af-ui .rec-list { max-height: 320px; overflow-y: auto; }
+.af-ui .rec-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1\.5);
+  padding: var(--sp-1\.5) 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: var(--text-tiny);
+}
+.af-ui .rec-method {
+  display: inline-block;
+  min-width: 40px;
+  text-align: center;
+  padding: 1px var(--sp-1);
+  border-radius: var(--rd-xs);
+  font-size: var(--text-micro);
+  font-weight: var(--fw-medium);
+  color: var(--white);
+  background: var(--slate-500);
+}
+.af-ui .rec-m-GET    { background: var(--blue-600); }
+.af-ui .rec-m-POST   { background: var(--green-600); }
+.af-ui .rec-m-PUT    { background: var(--amber-600); }
+.af-ui .rec-m-DELETE { background: var(--red-600); }
+.af-ui .rec-m-PATCH  { background: var(--slate-600); }
+.af-ui .rec-st { min-width: 28px; text-align: center; }
+.af-ui .rec-st.ok  { color: var(--success); }
+.af-ui .rec-st.err { color: var(--danger); }
+.af-ui .rec-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+.af-ui .rec-rt { color: var(--muted-2); font-size: var(--text-micro); }
+
+/* ── 「我的」tab 内嵌的表单资料块 ───────────────────────── */
+#view-profile.af-ui { display: block; margin-top: var(--sp-2); }
+
+/* ── toast（合并自 autofill）──────────────────────────────── */
+#af-toast {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sp-5);
+  transform: translateX(-50%);
+  max-width: 80%;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--rd-lg);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-normal);
+  color: var(--white);
+  background: var(--slate-800);
+  box-shadow: var(--shadow-modal);
+  z-index: 9999;
+}
+#af-toast.hidden { display: none; }
+#af-toast.toast-success { background: var(--green-600); }
+#af-toast.toast-error   { background: var(--red-600); }
+#af-toast.toast-warn    { background: var(--amber-600); }
