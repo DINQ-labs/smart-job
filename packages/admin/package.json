@@ -1,7 +1,8 @@
 {
-  "name": "boss-admin",
+  "name": "smart-job-admin",
   "version": "1.0.0",
-  "description": "Boss直聘 网关管理后台",
+  "description": "smart-job 管理后台",
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
