@@ -115,6 +115,31 @@ indeed_*` 等平台自动化工具。链路:`Claude Code → api-gateway → 扩
 4. `claude mcp list` 应显示 `smartjob ✓ Connected`。
 5. 直接对 Claude 说「检查一下 Boss 直聘登录状态」之类,它会自动调用对应工具。
 
+配置好后,在 Claude Code 里的实际效果 —— 从列工具到搜索、看详情、打招呼:
+
+**① 列出 MCP 工具** —— 问「mcp server 有哪些工具」,Claude Code 列出 job-api-gateway 暴露的
+全部工具(约 210 个,覆盖 Boss 直聘 / LinkedIn / Indeed 三大平台的求职端与招聘端)。
+
+![Claude Code 列出 MCP 工具](images/claude-code/01-list-tools.png)
+
+**② 检查登录、发起职位搜索** —— 「boss 登录了吗」→ Claude 调 `boss_check_login`;
+「搜索北京的项目经理职位」→ 调 `boss_search_jobs`。
+
+![检查登录并搜索职位](images/claude-code/02-check-login-search.png)
+
+**③ 拿到搜索结果** —— Claude 把职位整理成清单(职位 / 薪资 / 经验 / 公司),并给出分类与建议。
+
+![职位搜索结果](images/claude-code/03-search-results.png)
+
+**④ 查看职位详情** —— 「看下交付项目经理的详情」→ 调 `boss_get_job_detail`,返回岗位职责、
+要求与公司信息。
+
+![职位详情](images/claude-code/04-job-detail.png)
+
+**⑤ 打招呼联系 HR** —— 「打个招呼」→ 调 `boss_start_chat`,在你的浏览器里向对方 HR 发起打招呼。
+
+![向 HR 打招呼](images/claude-code/05-say-hi.png)
+
 > 不在仓库目录、或想让所有项目都能用,可改用用户级配置(与 `.mcp.json` 二选一,不要
 > 同时配,否则会出现两个重复的 MCP server):
 >

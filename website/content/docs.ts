@@ -8,7 +8,8 @@ export type Block =
   | { t: "p"; text: string }
   | { t: "ul"; items: string[] }
   | { t: "pre"; text: string }
-  | { t: "table"; head: string[]; rows: string[][] };
+  | { t: "table"; head: string[]; rows: string[][] }
+  | { t: "img"; src: string; alt: string };
 
 export interface DocContent {
   title: string;
@@ -288,6 +289,17 @@ const zh: Record<DocSlug, DocContent> = {
           "对 Claude 说「检查 Boss 直聘登录状态」之类,它会自动调用 boss_* 工具,链路为 Claude Code → api-gateway → 扩展 → 浏览器。",
         ],
       },
+      { t: "p", text: "配置好后,在 Claude Code 里的实际效果 —— 从列工具到搜索、看详情、打招呼:" },
+      { t: "p", text: "① 列出 MCP 工具:问「mcp server 有哪些工具」,Claude Code 列出 job-api-gateway 暴露的全部工具(约 210 个,覆盖三大平台的求职端与招聘端)。" },
+      { t: "img", src: "/claude-code/01-list-tools.png", alt: "Claude Code 列出 MCP 工具" },
+      { t: "p", text: "② 检查登录、发起搜索:「boss 登录了吗」→ 调 boss_check_login;「搜索北京的项目经理职位」→ 调 boss_search_jobs。" },
+      { t: "img", src: "/claude-code/02-check-login-search.png", alt: "检查登录并搜索职位" },
+      { t: "p", text: "③ 拿到搜索结果:Claude 把职位整理成清单 —— 职位 / 薪资 / 经验 / 公司,并给出分类与建议。" },
+      { t: "img", src: "/claude-code/03-search-results.png", alt: "职位搜索结果" },
+      { t: "p", text: "④ 查看职位详情:「看下交付项目经理的详情」→ 调 boss_get_job_detail,返回岗位职责、要求与公司信息。" },
+      { t: "img", src: "/claude-code/04-job-detail.png", alt: "职位详情" },
+      { t: "p", text: "⑤ 打招呼联系 HR:「打个招呼」→ 调 boss_start_chat,在你的浏览器里向对方 HR 发起打招呼。" },
+      { t: "img", src: "/claude-code/05-say-hi.png", alt: "向 HR 打招呼" },
     ],
   },
   admin: {
@@ -559,6 +571,17 @@ const en: Record<DocSlug, DocContent> = {
           "Tell Claude something like 'check my BOSS Zhipin login status' — it calls the boss_* tools, with the chain Claude Code → api-gateway → extension → browser.",
         ],
       },
+      { t: "p", text: "Once configured, here is what it looks like in Claude Code — from listing tools to searching, viewing detail and saying hi:" },
+      { t: "p", text: "1. List MCP tools — ask 'what tools does the mcp server have' and Claude Code lists everything job-api-gateway exposes (~210 tools across all three platforms, both seeker and recruiter sides)." },
+      { t: "img", src: "/claude-code/01-list-tools.png", alt: "Claude Code listing MCP tools" },
+      { t: "p", text: "2. Check login and search — 'is boss logged in' calls boss_check_login; 'search project-manager jobs in Beijing' calls boss_search_jobs." },
+      { t: "img", src: "/claude-code/02-check-login-search.png", alt: "Checking login and searching jobs" },
+      { t: "p", text: "3. Get search results — Claude organizes the jobs into a list (title / salary / experience / company) with categories and suggestions." },
+      { t: "img", src: "/claude-code/03-search-results.png", alt: "Job search results" },
+      { t: "p", text: "4. View a job detail — asking for a role's detail calls boss_get_job_detail, returning responsibilities, requirements and company info." },
+      { t: "img", src: "/claude-code/04-job-detail.png", alt: "Job detail" },
+      { t: "p", text: "5. Say hi to the recruiter — 'say hi' calls boss_start_chat to greet the HR contact from your own browser." },
+      { t: "img", src: "/claude-code/05-say-hi.png", alt: "Saying hi to the recruiter" },
     ],
   },
   admin: {

@@ -89,6 +89,16 @@ export default function DocBody({ blocks }: { blocks: Block[] }) {
                 </table>
               </div>
             );
+          case "img":
+            return (
+              <img
+                key={i}
+                src={b.src}
+                alt={b.alt}
+                loading="lazy"
+                className="w-full rounded-xl border border-white/10"
+              />
+            );
           default:
             return null;
         }
