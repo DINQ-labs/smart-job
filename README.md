@@ -2,6 +2,8 @@
 
 > 多平台（BOSS直聘 / LinkedIn / Indeed）求职 — 招聘自动化系统：浏览器扩展 + Agent 对话 + 任务编排。
 
+**官网 / 在线文档**：[smartjob.top](https://smartjob.top)
+
 smart-job 由一个 Chrome MV3 扩展、三个后端服务和一个 Vue3 管理后台组成，围绕大语言模型
 （Claude / OpenRouter）做求职与招聘场景的对话式自动化。扩展与管理后台均支持中 / 英双语。
 
