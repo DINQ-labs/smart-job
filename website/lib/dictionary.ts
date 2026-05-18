@@ -176,7 +176,7 @@ const zh: Dictionary = {
     title: "快速开始",
     subtitle: "前置：Docker 与 Docker Compose。三个后端、数据库、管理后台一键拉起。",
     steps: [
-      { title: "克隆仓库", desc: "获取源码。", code: "git clone https://github.com/smart-job/smart-job.git\ncd smart-job" },
+      { title: "克隆仓库", desc: "获取源码。", code: "git clone https://github.com/DINQ-labs/smart-job.git\ncd smart-job" },
       { title: "配置环境变量", desc: "复制示例文件，按需填写 OPENROUTER_API_KEY 等。", code: "cp .env.example .env" },
       { title: "一键启动", desc: "构建并拉起全部服务。", code: "docker compose up -d --build" },
       { title: "加载浏览器扩展", desc: "在 chrome://extensions 启用开发者模式，加载 extensions/job-seeker/ 目录。" },
@@ -324,7 +324,7 @@ const en: Dictionary = {
     title: "Quick start",
     subtitle: "Prerequisite: Docker and Docker Compose. Backends, database and admin console start with one command.",
     steps: [
-      { title: "Clone the repo", desc: "Get the source.", code: "git clone https://github.com/smart-job/smart-job.git\ncd smart-job" },
+      { title: "Clone the repo", desc: "Get the source.", code: "git clone https://github.com/DINQ-labs/smart-job.git\ncd smart-job" },
       { title: "Configure env vars", desc: "Copy the example file and fill in OPENROUTER_API_KEY etc.", code: "cp .env.example .env" },
       { title: "Start everything", desc: "Build and bring up all services.", code: "docker compose up -d --build" },
       { title: "Load the extension", desc: "Enable developer mode at chrome://extensions and load the extensions/job-seeker/ directory." },

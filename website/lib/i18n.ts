@@ -11,4 +11,4 @@ export const localeNames: Record<Locale, string> = {
   en: "English",
 };
 
-export const GITHUB_URL = "https://github.com/smart-job/smart-job";
+export const GITHUB_URL = "https://github.com/DINQ-labs/smart-job";

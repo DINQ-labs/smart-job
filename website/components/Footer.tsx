@@ -49,7 +49,7 @@ export default function Footer({ locale }: { locale: Locale }) {
                     rel="noreferrer"
                     className="text-sm text-slate-400 transition hover:text-white"
                   >
-                    smart-job/smart-job
+                    DINQ-labs/smart-job
                   </a>
                 </li>
               </ul>
