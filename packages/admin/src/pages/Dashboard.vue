@@ -1,14 +1,5 @@
 <template>
   <div class="dashboard">
-    <a class="evolve-card" href="/evolve/" target="_blank" rel="noreferrer">
-      <span class="evolve-icon">🧬</span>
-      <span class="evolve-text">
-        <strong>Evolve Agent</strong>
-        <small>{{ t('dashboard.evolveDesc') }}</small>
-      </span>
-      <span class="evolve-go">→</span>
-    </a>
-
     <StatsBar :stats="stats" :ws-connected="wsConnected" />
 
     <div class="main-grid">
@@ -403,27 +394,4 @@ onUnmounted(() => {
 }
 .mode-hist-num { color: #94a3b8; font-variant-numeric: tabular-nums; }
 .mode-hist-num.dim { color: #475569; }
-
-.evolve-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: linear-gradient(90deg, #1e293b 0%, #1e3a5f 100%);
-  border: 1px solid #334155;
-  border-radius: 8px;
-  padding: 14px 18px;
-  margin-bottom: 12px;
-  text-decoration: none;
-  color: #e2e8f0;
-  transition: border-color 0.15s, transform 0.15s;
-}
-.evolve-card:hover {
-  border-color: #60a5fa;
-  transform: translateX(2px);
-}
-.evolve-icon { font-size: 24px; }
-.evolve-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.evolve-text strong { font-size: 14px; color: #93c5fd; }
-.evolve-text small { font-size: 11px; color: #94a3b8; }
-.evolve-go { font-size: 18px; color: #60a5fa; }
 </style>

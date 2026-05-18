@@ -42,12 +42,12 @@ docker compose up -d --build
 
 | 服务 | 地址 |
 |---|---|
-| 管理后台 admin | http://localhost:8080 |
+| 管理后台 admin | http://localhost:8081 |
 | api-gateway | http://localhost:8767 |
 | agent-gateway | http://localhost:8769 |
 | portal-api | http://localhost:8771 |
-| PostgreSQL | localhost:5433 |
-| Redis | localhost:6380 |
+| PostgreSQL | localhost:5443 |
+| Redis | localhost:6390 |
 
 数据库 `boss_gateway`、`smart_job` 在 postgres 容器首次启动时自动创建；各服务的表结构在自身启动时建。
 
@@ -92,8 +92,11 @@ pnpm dev                      # 开发服务器，默认 http://localhost:5174
 
 ## 文档
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — 详细架构与数据流（模块职责的深入参考）
-- [docs/DESIGN.md](docs/DESIGN.md) — 设计规范
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — 架构总览与端到端数据流
+- [docs/BACKEND.md](docs/BACKEND.md) — 后端设计（三个 Python 服务 + 共享包）
+- [docs/EXTENSION.md](docs/EXTENSION.md) — 扩展设计（抓包 / 自动填表 / 工作自动化）
+- [docs/EXTENSION-SETUP.md](docs/EXTENSION-SETUP.md) — 扩展加载与首次使用引导
+- [docs/ADMIN.md](docs/ADMIN.md) — 管理后台设计
 - [CONTRIBUTING.md](CONTRIBUTING.md) — 贡献指南
 
 ## 免责声明

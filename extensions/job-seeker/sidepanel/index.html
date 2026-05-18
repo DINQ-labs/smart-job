@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>DingQ v3</title>
+<title>SmartJob</title>
 <meta name="referrer" content="no-referrer">
 <link rel="stylesheet" href="styles/tokens.css">
 <link rel="stylesheet" href="styles/reset.css">
@@ -18,6 +18,8 @@
       <span class="header-title" data-i18n="header.home">首页</span>
     </button>
     <span class="header-spacer"></span>
+    <button class="header-settings" id="headerSettings" type="button"
+            data-i18n-attr="title:header.settingsTitle">⚙️</button>
     <button class="header-lang" id="headerLang" type="button" data-i18n-switch></button>
     <span class="header-mode" id="headerMode" role="button" tabindex="0"
           data-i18n-attr="title:header.modeTitle">
@@ -26,6 +28,14 @@
       <span class="header-mode-switch" aria-hidden="true">⇆</span>
     </span>
   </header>
+
+  <!-- ── 连接异常横幅(被网关踢出 / 版本过旧时显示)──────────── -->
+  <div class="kick-banner" id="kickBanner" hidden role="alert">
+    <span class="kick-banner-ico" aria-hidden="true">⚠️</span>
+    <span class="kick-banner-text" id="kickBannerText"></span>
+    <button class="kick-banner-close" id="kickBannerClose" type="button"
+            data-i18n-attr="title:kick.dismiss" title="关闭">✕</button>
+  </div>
 
   <!-- ── 顶部 Tab 栏 ──────────────────────────────────────── -->
   <nav class="pt" id="ptTabs">

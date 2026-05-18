@@ -1,5 +1,4 @@
 export default {
-  evolveDesc: '抓包驱动的代码自动改造（独立服务，端口 8770）',
   extSessions: '扩展会话',
   refresh: '刷新',
   emptyExtLine1: '暂无扩展连接。',

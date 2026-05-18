@@ -1,9 +1,19 @@
 <template>
   <div class="login-wrap">
     <div class="login-card">
-      <div class="logo">Job Admin</div>
+      <div class="logo">SmartJob</div>
       <p class="subtitle">{{ t('loginPage.subtitle') }}</p>
       <form @submit.prevent="handleLogin">
+        <div class="field">
+          <label>{{ t('loginPage.username') }}</label>
+          <input
+            v-model="username"
+            type="text"
+            :placeholder="t('loginPage.usernamePh')"
+            autocomplete="username"
+            :disabled="loading"
+          />
+        </div>
         <div class="field">
           <label>{{ t('loginPage.password') }}</label>
           <input
@@ -15,7 +25,7 @@
           />
         </div>
         <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
-        <button type="submit" :disabled="loading || !password">
+        <button type="submit" :disabled="loading || !username || !password">
           {{ loading ? t('loginPage.loggingIn') : t('loginPage.login') }}
         </button>
       </form>
@@ -33,15 +43,16 @@ const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 
+const username = ref('')
 const password = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
 
 async function handleLogin() {
-  if (!password.value) return
+  if (!username.value || !password.value) return
   loading.value = true
   errorMsg.value = ''
-  const result = await auth.login(password.value)
+  const result = await auth.login(username.value, password.value)
   loading.value = false
   if (result.ok) {
     router.replace('/')

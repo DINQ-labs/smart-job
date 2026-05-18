@@ -56,7 +56,7 @@ JWT_PRIVATE_KEY_PATH = Path(
 JWT_KEY_ID = _opt("JWT_KEY_ID", "")  # 空时启动后从公钥派生
 JWT_ISSUER = _opt("JWT_ISSUER", "http://localhost:8771")
 JWT_AUDIENCE = _opt("JWT_AUDIENCE", "job-portal")
-ACCESS_TTL_MIN = _opt_int("ACCESS_TTL_MIN", 15)
+ACCESS_TTL_MIN = _opt_int("ACCESS_TTL_MIN", 1440)  # access token 有效期,默认 24h(1440 min)
 REFRESH_TTL_DAYS = _opt_int("REFRESH_TTL_DAYS", 30)
 
 # ── Resend ───────────────────────────────────────────────────────────────
@@ -68,13 +68,20 @@ CODE_TTL_MINUTES = _opt_int("CODE_TTL_MINUTES", 10)
 CODE_MAX_ATTEMPTS = _opt_int("CODE_MAX_ATTEMPTS", 5)
 CODE_RESEND_COOLDOWN_SECONDS = _opt_int("CODE_RESEND_COOLDOWN_SECONDS", 60)
 
+# 开发态固定验证码:非生产环境(APP_ENV != production)注册 / 找回密码统一用此码,
+# 免去查邮箱或翻服务端日志;扩展注册面板会直接把它显示出来。生产环境强制留空 →
+# verification.generate_code() 回落到 CSPRNG 随机码。设 DEV_FIXED_CODE= 为空可在
+# 开发态也关闭(回随机码);非 6 位纯数字的值一律忽略。
+_dev_code = "" if IS_PRODUCTION else os.environ.get("DEV_FIXED_CODE", "666666").strip()
+DEV_FIXED_CODE = _dev_code if (len(_dev_code) == 6 and _dev_code.isdigit()) else ""
+
 # ── 默认账号播种(开发态)──────────────────────────────────────────────────
 # 让浏览器扩展免注册即可登录,且 Claude Code 直连 job-api-gateway MCP 时用同一个
 # 已知身份 —— MCP 的 X-User-Id 头与扩展 WS 的 ?user_id= 都对上这个固定 id。
 # 弱口令,生产环境(APP_ENV=production)默认关闭;可用 SEED_DEFAULT_USER 显式覆盖。
 SEED_DEFAULT_USER = _opt("SEED_DEFAULT_USER", "0" if IS_PRODUCTION else "1") == "1"
 DEFAULT_USER_ID = _opt("DEFAULT_USER_ID", "smartjob")
-DEFAULT_USER_EMAIL = _opt("DEFAULT_USER_EMAIL", "smartjob@joyhouselabs.com")  # 勿用 .local/.test 等保留域:Pydantic EmailStr 会拒
+DEFAULT_USER_EMAIL = _opt("DEFAULT_USER_EMAIL", "demo@smartjob.top")  # 勿用 .local/.test 等保留域:Pydantic EmailStr 会拒
 DEFAULT_USER_PASSWORD = _opt("DEFAULT_USER_PASSWORD", "123456")
 
 # ── 版本号（用于 /health 和 JWT 元信息）────────────────────────────────────

@@ -2,9 +2,9 @@
  * options/index.js — 设置页：后端地址（portal-api / api-gw / agent-gw 各自独立填写）+ 账号状态
  *
  * 三个后端地址各用一个输入框单独设置，存到 chrome.storage.local：
- *   portalApiUrl  账号 / 鉴权     (job-portal-api,    默认 https://api.job.joyhouse.chat)
- *   apiGwUrl      命令网关 / WS   (job-api-gateway,   默认 https://control.job.joyhouse.chat)
- *   agentGwUrl    Agent 对话/录制 (job-agent-gateway, 默认 https://agent.job.joyhouse.chat)
+ *   portalApiUrl  账号 / 鉴权     (job-portal-api,    默认 https://api.smartjob.top/portal)
+ *   apiGwUrl      命令网关 / WS   (job-api-gateway,   默认 https://api.smartjob.top)
+ *   agentGwUrl    Agent 对话/录制 (job-agent-gateway, 默认 https://api.smartjob.top/agent-gw)
  *
  * 各消费方（sidepanel/shared/api.js、auth-api.js、background/index.js、
  * lib/recorder/recorder-bg.js、lib/ext-core/core/task-monitor.js、
@@ -21,10 +21,11 @@
       apiGwUrl:     'http://127.0.0.1:8767',
       agentGwUrl:   'http://127.0.0.1:8769',
     },
-    prod: {
-      portalApiUrl: 'https://api.job.joyhouse.chat',
-      apiGwUrl:     'https://control.job.joyhouse.chat',
-      agentGwUrl:   'https://agent.job.joyhouse.chat',
+    // 演示站:部署在 smartjob.top —— 三个网关同在 api.smartjob.top 下,按路径前缀分发
+    demo: {
+      portalApiUrl: 'https://api.smartjob.top/portal',
+      apiGwUrl:     'https://api.smartjob.top',
+      agentGwUrl:   'https://api.smartjob.top/agent-gw',
     },
   };
 
@@ -38,6 +39,10 @@
     savedTip:   document.getElementById('savedTip'),
     healthRows: document.getElementById('healthRows'),
     accountRow: document.getElementById('accountRow'),
+    connDot:        document.getElementById('connDot'),
+    connText:       document.getElementById('connText'),
+    connMeta:       document.getElementById('connMeta'),
+    connRefreshBtn: document.getElementById('connRefreshBtn'),
   };
 
   const norm = (s) => (s || '').trim().replace(/\/+$/, '');
@@ -46,13 +51,13 @@
   function isLocal(host) { return /^(127\.0\.0\.1|localhost)/.test(host); }
   function hostNoPort(host) { return (host || '').split(':')[0]; }
   function derivePortalApi(host) {
-    return isLocal(host) ? `http://${hostNoPort(host)}:8771` : PRESETS.prod.portalApiUrl;
+    return isLocal(host) ? `http://${hostNoPort(host)}:8771` : PRESETS.demo.portalApiUrl;
   }
   function deriveApiGw(host) {
-    return isLocal(host) ? `http://${hostNoPort(host)}:8767` : PRESETS.prod.apiGwUrl;
+    return isLocal(host) ? `http://${hostNoPort(host)}:8767` : PRESETS.demo.apiGwUrl;
   }
   function deriveAgentGw(host) {
-    return isLocal(host) ? `http://${hostNoPort(host)}:8769` : PRESETS.prod.agentGwUrl;
+    return isLocal(host) ? `http://${hostNoPort(host)}:8769` : PRESETS.demo.agentGwUrl;
   }
 
   function syncPresetActive() {
@@ -62,7 +67,7 @@
       agentGwUrl:   norm(els.agentGw.value),
     };
     let matched = 'custom';
-    for (const key of ['localhost', 'prod']) {
+    for (const key of ['localhost', 'demo']) {
       const p = PRESETS[key];
       if (p.portalApiUrl === cur.portalApiUrl &&
           p.apiGwUrl === cur.apiGwUrl &&
@@ -82,21 +87,55 @@
     els.agentGw.value   = r.agentGwUrl   || deriveAgentGw(host);
     syncPresetActive();
     await renderAccount();
+    renderConnStatus();
+  }
+
+  // ── 扩展连接状态（后台 Service Worker ↔ api-gw WebSocket）─────────
+  // 向 background 发 getStatus 取 ws 实时状态;后台 connectionState 广播时实时刷新。
+  async function renderConnStatus() {
+    if (!els.connDot) return;
+    let st = null;
+    try { st = await chrome.runtime.sendMessage({ type: 'getStatus' }); }
+    catch (_) { st = null; }
+    if (!st) {
+      els.connDot.className = 'health-dot';
+      els.connText.textContent = t('options.conn.unknown');
+      els.connMeta.textContent = '';
+      return;
+    }
+    const online = !!st.connected;
+    els.connDot.className = 'health-dot ' + (online ? 'up' : 'down');
+    els.connText.textContent = t(online ? 'options.conn.online' : 'options.conn.offline');
+    const bits = [];
+    if (st.gatewayUrl) bits.push(st.gatewayUrl);
+    if (online && st.sessionId) bits.push('session=' + String(st.sessionId).slice(0, 12));
+    els.connMeta.textContent = bits.join('  ·  ');
   }
 
   async function save() {
-    const portalApiUrl = norm(els.portalApi.value) || PRESETS.prod.portalApiUrl;
-    const apiGwUrl     = norm(els.apiGw.value)     || PRESETS.prod.apiGwUrl;
-    const agentGwUrl   = norm(els.agentGw.value)   || PRESETS.prod.agentGwUrl;
+    const portalApiUrl = norm(els.portalApi.value) || PRESETS.demo.portalApiUrl;
+    const apiGwUrl     = norm(els.apiGw.value)     || PRESETS.demo.apiGwUrl;
+    const agentGwUrl   = norm(els.agentGw.value)   || PRESETS.demo.agentGwUrl;
+    // 后端地址变了：旧 token 是上一个后端发的，对新后端无效 —— 清掉本地登录态强制
+    // 重登，避免拿旧 token 撞出 refresh_revoked / invalid_refresh 之类的死胡同。
+    const prev = await chrome.storage.local.get(['portalApiUrl', 'apiGwUrl', 'agentGwUrl']);
+    const hadExplicit = !!(prev.portalApiUrl || prev.apiGwUrl || prev.agentGwUrl);
+    const backendChanged = hadExplicit && (
+      (prev.portalApiUrl || '') !== portalApiUrl ||
+      (prev.apiGwUrl     || '') !== apiGwUrl ||
+      (prev.agentGwUrl   || '') !== agentGwUrl
+    );
     // gatewayHost：从 api-gw URL 抽出主机名，供未迁移的消费方判断"本地与否"（向下兼容）
     let gatewayHost = '127.0.0.1';
     try { gatewayHost = new URL(apiGwUrl).hostname || '127.0.0.1'; } catch (_) {}
     await chrome.storage.local.set({ portalApiUrl, apiGwUrl, agentGwUrl, gatewayHost });
+    if (backendChanged) await window.DQ?.authApi?.clearAuth?.();
     els.portalApi.value = portalApiUrl;
     els.apiGw.value = apiGwUrl;
     els.agentGw.value = agentGwUrl;
     syncPresetActive();
-    flash(t('options.flash.saved'));
+    if (backendChanged) await renderAccount();
+    flash(t(backendChanged ? 'options.flash.savedSwitched' : 'options.flash.saved'));
   }
 
   function flash(msg) {
@@ -198,7 +237,10 @@
         await authApi.refresh();
         flash(t('options.flash.refreshed'));
       } catch (err) {
-        flash(t('options.flash.refreshFail') + (err.message || err));
+        // sessionExpired：refresh 已不可恢复，auth-api 已清本地会话 → 提示去重新登录。
+        flash(err && err.sessionExpired
+          ? t('options.flash.sessionExpired')
+          : t('options.flash.refreshFail') + (err.message || err));
       } finally {
         await renderAccount();
       }
@@ -242,6 +284,16 @@
   });
   els.saveBtn.addEventListener('click', save);
   els.pingBtn.addEventListener('click', pingAll);
+  els.connRefreshBtn?.addEventListener('click', renderConnStatus);
+
+  // 后台 WS 连接状态变化（notifyPopup 广播 connectionState）时实时刷新
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg && msg.type === 'connectionState') renderConnStatus();
+  });
+  // 切回本页时重新查一次（Service Worker 可能已休眠/重启，状态已变）
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) renderConnStatus();
+  });
 
   // 当 sidepanel 完成登录/登出后 storage 变了，options 页里同步刷新
   chrome.storage.onChanged.addListener((changes, area) => {

@@ -1,10 +1,8 @@
 /*
  * modules/welcome.js — 首次安装 4 屏轮播(DESIGN.md §6.3 wc-*).
  *
- * 触发条件: chrome.storage.local.user.welcomed !== true(首次打开侧边栏).
- * 完成动作:
- *   - 写 user.welcomed = true
- *   - 派发 'dq:welcome-done' 事件,onboarding.js 监听到后接着跑 role 选择
+ * 注意:首屏已改为「登录 / 注册」(login-first),本轮播不再启动时自动弹出。
+ *      window.DQ.welcome API 保留,需要时可手动 open()(如帮助入口)。
  *
  * 视觉跟 DESIGN.md §6 暗顶卡片(slate-900 hood) + 大功能图标圆 + 4 dots +
  * < > arrow + 居中 1/4 counter + slate-900 大 CTA + 免费开始无需信用卡 footer.
@@ -180,12 +178,8 @@
     } catch (_) { return false; }
   }
 
-  // 启动时检查是否需要展示
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', maybeShow);
-  } else {
-    setTimeout(maybeShow, 0);
-  }
+  // 首屏改为「登录 / 注册」(login-first):欢迎轮播不再启动时自动弹出。
+  // 仍保留 window.DQ.welcome API,需要时(如帮助入口)可手动 open()。
 
   window.DQ = window.DQ || {};
   window.DQ.welcome = { open, close, maybeShow };

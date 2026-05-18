@@ -58,7 +58,8 @@ from browser_pool import browser_pool
 from proxy_pool import proxy_pool
 from server_helpers import (
     _ok, _err, _ext_connected, _auth_required, _require_internal, _http_resolve_session,
-    _current_user_id, _current_role, ADMIN_PASSWORD, COOKIE_NAME, _admin_tokens, EXT_TOKEN,
+    _current_user_id, _current_role, ADMIN_PASSWORD, COOKIE_NAME, _admin_tokens,
+    authenticate_extension, _hash_admin_password, _verify_admin_password,
 )
 
 log = logging.getLogger(__name__)
@@ -727,21 +728,67 @@ async def admin_update_command_registry(request: Request) -> JSONResponse:
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
 
 
+# ── 管理后台账号体系 ────────────────────────────────────────────────────────
+# 登录走 admin_users 表(bcrypt 哈希)。ADMIN_PASSWORD 仍是「鉴权开关」+ 首次
+# 播种 admin 账号的种子;表里有账号后,登录 / 改密 / 增删都以表为准。
+
+_admin_seed_checked = False
+
+
+async def _ensure_admin_seed() -> None:
+    """admin_users 表为空且配了 ADMIN_PASSWORD → 播种首个账号 admin。只查一次。"""
+    global _admin_seed_checked
+    if _admin_seed_checked:
+        return
+    _admin_seed_checked = True
+    try:
+        if ADMIN_PASSWORD and await db.count_admin_users() == 0:
+            await db.create_admin_user("admin", _hash_admin_password(ADMIN_PASSWORD))
+            print("[admin] 已用 ADMIN_PASSWORD 播种首个管理账号:admin", flush=True)
+    except Exception as e:
+        _admin_seed_checked = False  # 播种失败 → 下次重试
+        print(f"[admin] 播种管理账号失败:{e}", flush=True)
+
+
+async def _admin_auth_enabled() -> bool:
+    """有 ADMIN_PASSWORD 或表里已有账号 → 鉴权启用;否则关闭(本地开发)。"""
+    if ADMIN_PASSWORD:
+        return True
+    try:
+        return await db.count_admin_users() > 0
+    except Exception:
+        return False
+
+
+def _current_admin(request: Request) -> str:
+    """从 Cookie token 反查当前登录的管理员用户名;未登录返回空串。"""
+    return _admin_tokens.get(request.cookies.get(COOKIE_NAME, ""), "")
+
+
 async def admin_login(request: Request) -> JSONResponse:
-    """POST /admin/login — 密码登录，成功后设置 HttpOnly Cookie。"""
-    if not ADMIN_PASSWORD:
-        return JSONResponse({"ok": True, "message": "认证已禁用（未设置 ADMIN_PASSWORD）"})
+    """POST /admin/login — 用户名 + 密码登录,成功后设置 HttpOnly Cookie。"""
+    await _ensure_admin_seed()
+    if not await _admin_auth_enabled():
+        return JSONResponse({"ok": True, "message": "认证已禁用(未设 ADMIN_PASSWORD 且无管理账号)"})
     try:
         body = await request.json()
     except Exception as _e:
         log.debug("silently returning %s: %s", 'value', _e)
         return JSONResponse({"ok": False, "error": "invalid JSON"}, status_code=400)
+    username = (body.get("username") or "").strip()
     password = body.get("password", "")
-    if not password or password != ADMIN_PASSWORD:
-        return JSONResponse({"ok": False, "error": "密码错误"}, status_code=401)
+    if not username or not password:
+        return JSONResponse({"ok": False, "error": "用户名和密码必填"}, status_code=400)
+    user = await db.get_admin_user(username)
+    if not user or not _verify_admin_password(password, user["password_hash"]):
+        return JSONResponse({"ok": False, "error": "用户名或密码错误"}, status_code=401)
     token = secrets.token_hex(32)
-    _admin_tokens.add(token)
-    resp = JSONResponse({"ok": True})
+    _admin_tokens[token] = username
+    try:
+        await db.touch_admin_login(username)
+    except Exception as _e:
+        log.debug("silently swallowed: %s", _e)
+    resp = JSONResponse({"ok": True, "username": username})
     resp.set_cookie(
         COOKIE_NAME, token,
         httponly=True,
@@ -755,20 +802,99 @@ async def admin_login(request: Request) -> JSONResponse:
 async def admin_logout_admin(request: Request) -> JSONResponse:
     """POST /admin/logout — 清除 Cookie 和服务端 token。"""
     token = request.cookies.get(COOKIE_NAME, "")
-    _admin_tokens.discard(token)
+    _admin_tokens.pop(token, None)
     resp = JSONResponse({"ok": True})
     resp.delete_cookie(COOKIE_NAME, path="/admin")
     return resp
 
 
 async def admin_me(request: Request) -> JSONResponse:
-    """GET /admin/me — 检查当前认证状态（供前端导航守卫使用）。"""
-    if not ADMIN_PASSWORD:
-        return JSONResponse({"ok": True, "authenticated": True, "auth_enabled": False})
-    token = request.cookies.get(COOKIE_NAME, "")
-    if token and token in _admin_tokens:
-        return JSONResponse({"ok": True, "authenticated": True, "auth_enabled": True})
+    """GET /admin/me — 检查当前认证状态(供前端导航守卫使用)。"""
+    await _ensure_admin_seed()
+    if not await _admin_auth_enabled():
+        return JSONResponse({"ok": True, "authenticated": True, "auth_enabled": False, "username": ""})
+    username = _current_admin(request)
+    if username:
+        return JSONResponse({
+            "ok": True, "authenticated": True, "auth_enabled": True, "username": username,
+        })
     return JSONResponse({"ok": False, "authenticated": False, "auth_enabled": True}, status_code=401)
+
+
+async def admin_change_password(request: Request) -> JSONResponse:
+    """POST /admin/password — 当前登录管理员修改自己的密码。"""
+    err = _auth_required(request)
+    if err is not None:
+        return err
+    username = _current_admin(request)
+    if not username:
+        return JSONResponse({"ok": False, "error": "未登录"}, status_code=401)
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"ok": False, "error": "invalid JSON"}, status_code=400)
+    old_pw = body.get("old_password", "")
+    new_pw = body.get("new_password", "")
+    if not new_pw or len(new_pw) < 6:
+        return JSONResponse({"ok": False, "error": "新密码至少 6 位"}, status_code=400)
+    user = await db.get_admin_user(username)
+    if not user or not _verify_admin_password(old_pw, user["password_hash"]):
+        return JSONResponse({"ok": False, "error": "原密码错误"}, status_code=401)
+    try:
+        await db.set_admin_password(username, _hash_admin_password(new_pw))
+    except ValueError:
+        return JSONResponse({"ok": False, "error": "新密码过长"}, status_code=400)
+    return JSONResponse({"ok": True})
+
+
+async def admin_users(request: Request) -> JSONResponse:
+    """GET /admin/users 列出管理账号;POST /admin/users 新建。"""
+    err = _auth_required(request)
+    if err is not None:
+        return err
+    if request.method == "GET":
+        users = await db.list_admin_users()
+        return JSONResponse({"ok": True, "users": users, "current": _current_admin(request)})
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"ok": False, "error": "invalid JSON"}, status_code=400)
+    username = (body.get("username") or "").strip()
+    password = body.get("password", "")
+    if not username or not password:
+        return JSONResponse({"ok": False, "error": "用户名和密码必填"}, status_code=400)
+    if len(password) < 6:
+        return JSONResponse({"ok": False, "error": "密码至少 6 位"}, status_code=400)
+    if await db.get_admin_user(username):
+        return JSONResponse({"ok": False, "error": "用户名已存在"}, status_code=409)
+    try:
+        user = await db.create_admin_user(username, _hash_admin_password(password))
+    except ValueError:
+        return JSONResponse({"ok": False, "error": "密码过长"}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+    return JSONResponse({"ok": True, "user": {"id": user["id"], "username": user["username"]}})
+
+
+async def admin_users_delete(request: Request) -> JSONResponse:
+    """DELETE /admin/users/{user_id} — 删除管理账号(不可删最后一个 / 当前登录账号)。"""
+    err = _auth_required(request)
+    if err is not None:
+        return err
+    try:
+        user_id = int(request.path_params.get("user_id", "0"))
+    except (ValueError, TypeError):
+        return JSONResponse({"ok": False, "error": "无效 id"}, status_code=400)
+    users = await db.list_admin_users()
+    target = next((u for u in users if u["id"] == user_id), None)
+    if target is None:
+        return JSONResponse({"ok": False, "error": "账号不存在"}, status_code=404)
+    if len(users) <= 1:
+        return JSONResponse({"ok": False, "error": "不能删除最后一个管理账号"}, status_code=400)
+    if target["username"] == _current_admin(request):
+        return JSONResponse({"ok": False, "error": "不能删除当前登录的账号"}, status_code=400)
+    await db.delete_admin_user(user_id)
+    return JSONResponse({"ok": True})
 
 
 async def handle_admin_ws(websocket: WebSocket) -> None:
@@ -1220,6 +1346,31 @@ async def handle_extension_ws(websocket: WebSocket) -> None:
     stable_browser_id = websocket.query_params.get("bid", "")
     user_id_from_ext = (websocket.query_params.get("user_id", "")
                         or websocket.query_params.get("uid", "")).strip()  # uid 兼容旧扩展
+
+    # ── 握手鉴权 ──────────────────────────────────────────────────────────
+    # 校验 query 里的 token(portal JWT 或静态 EXT_TOKEN)。未配置 EXT_TOKEN /
+    # EXT_AUTH_REQUIRED 时放行(内网/开发);配置后强制。JWT 模式下 user_id 改用
+    # 验过签的 sub —— 使下方按 user_id 的踢人逻辑无法被未授权方伪造、定向踢人。
+    _auth_ok, _verified_uid, _auth_mode = await authenticate_extension(
+        websocket.query_params.get("token", ""), user_id_from_ext,
+    )
+    if not _auth_ok:
+        print(f"[gateway] 拒绝扩展连接:握手鉴权失败 ip={ip_address} name={ext_name or '(unknown)'}", flush=True)
+        try:
+            await websocket.send_text(json.dumps({
+                "type": "kicked",
+                "reason": "连接未授权:请重新登录扩展后重试。",
+            }))
+        except Exception as _e:
+            log.debug("silently swallowed: %s", _e)
+        try:
+            await websocket.close(code=4401)
+        except Exception as _e:
+            log.debug("silently swallowed: %s", _e)
+        return
+    if _auth_mode == "jwt":
+        user_id_from_ext = _verified_uid
+
     # 同一 (user_id, ext_kind) 后连踢前连(其它 ext_kind 不动)
     if user_id_from_ext:
         for old_entry in session_store.get_sessions_by_user_id(user_id_from_ext):
@@ -2612,6 +2763,9 @@ def register_routes(app):
     app.add_route("/admin/login", admin_login, methods=["POST"])
     app.add_route("/admin/logout", admin_logout_admin, methods=["POST"])
     app.add_route("/admin/me", admin_me, methods=["GET"])
+    app.add_route("/admin/password", admin_change_password, methods=["POST"])
+    app.add_route("/admin/users", admin_users, methods=["GET", "POST"])
+    app.add_route("/admin/users/{user_id}", admin_users_delete, methods=["DELETE"])
     app.add_route("/users/{app_user_id}/session", get_session_by_app_user, methods=["GET"])
     app.add_route("/jobs/mark-interested", api_mark_job_interested, methods=["POST"])
     app.add_route("/boss/geek/mark-job-interest", api_boss_geek_mark_job_interest, methods=["POST"])

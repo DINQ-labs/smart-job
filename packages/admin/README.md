@@ -1,6 +1,6 @@
 # job-api-admin
 
-Boss API Gateway 管理后台（Vue 3 + TypeScript + Vite）
+SmartJob 管理后台（Vue 3 + TypeScript + Vite）
 
 用于监控和管理 boss-api-gateway 的会话、命令、浏览器/代理资源池和 Cookie 账号等。
 

@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "DingQ v3",
-  "version": "3.1.0",
+  "name": "SmartJob",
+  "version": "0.8",
   "description": "__MSG_appDesc__",
   "default_locale": "zh_CN",
   "background": { "service_worker": "background/index.js" },
-  "action": { "default_title": "DingQ v3", "default_popup": "popup/index.html" },
+  "action": { "default_title": "SmartJob", "default_popup": "popup/index.html" },
   "options_ui": { "page": "options/index.html", "open_in_tab": true },
   "side_panel": { "default_path": "sidepanel/index.html" },
   "content_scripts": [

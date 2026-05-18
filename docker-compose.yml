@@ -3,8 +3,8 @@
 #   cp .env.example .env   # 按需填 OPENROUTER_API_KEY 等
 #   docker compose up -d --build
 #
-# 端口：admin http://localhost:8080  ·  api-gw :8767  ·  agent-gw :8769
-#       portal-api :8771  ·  postgres :5433  ·  redis :6380
+# 端口：admin http://localhost:8081  ·  api-gw :8767  ·  agent-gw :8769
+#       portal-api :8771  ·  postgres :5443  ·  redis :6390
 name: smart-job
 
 services:
@@ -13,7 +13,7 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
     ports:
-      - "5433:5432"
+      - "5443:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -26,7 +26,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6380:6379"
+      - "6390:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -42,6 +42,12 @@ services:
       DB_BACKEND: postgres
       DB_POSTGRES_URL: postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/boss_gateway
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # 扩展 WS 握手鉴权 —— 留空 = 内网放行;公网部署务必配置(见 .env.example)
+      EXT_TOKEN: ${EXT_TOKEN:-}
+      EXT_AUTH_REQUIRED: ${EXT_AUTH_REQUIRED:-}
+      PORTAL_JWKS_URL: ${PORTAL_JWKS_URL:-}
+      JWT_ISSUER: ${JWT_ISSUER:-}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-}
     ports:
       - "8767:8767"
     depends_on:
@@ -59,6 +65,12 @@ services:
       JOB_API_GATEWAY_URL: http://api-gateway:8767
       JOB_PORTAL_API_URL: http://portal-api:8771
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      AGENT_MODEL: ${AGENT_MODEL:-z-ai/glm-5-turbo}
+      # SSE / 写路径鉴权 —— 留空 = 内网放行;公网部署务必设为 true(见 .env.example)
+      AGENT_AUTH_REQUIRED: ${AGENT_AUTH_REQUIRED:-}
+      PORTAL_JWKS_URL: ${PORTAL_JWKS_URL:-}
+      JWT_ISSUER: ${JWT_ISSUER:-}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-}
     ports:
       - "8769:8769"
     depends_on:
@@ -86,7 +98,7 @@ services:
       context: ./packages/admin
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "8081:80"
     depends_on:
       - api-gateway
       - agent-gateway

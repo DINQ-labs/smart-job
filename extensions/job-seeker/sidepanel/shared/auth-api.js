@@ -166,16 +166,31 @@
       return r;
     },
 
-    // refresh：拿当前 refresh 换新对
+    // refresh：拿当前 refresh 换新对。
+    // /auth/refresh 返回 401 = refresh 凭证被拒（已吊销 / 重用检测 / 过期 / 无效），
+    // 会话不可恢复 —— 清掉本地登录态并打 sessionExpired 标记，让各界面回落到登录引导。
+    // 网络错误 / 5xx 等暂时性故障不清 auth，留待重试。
     async refresh() {
       const a = await loadAuth();
       if (!a || !a.refreshToken) {
-        const err = new Error('no_refresh_token'); err.status = 401; throw err;
+        await clearAuth();
+        const err = new Error('no_refresh_token');
+        err.status = 401; err.sessionExpired = true;
+        throw err;
       }
-      const r = await _req('/auth/refresh', {
-        method: 'POST',
-        body: { refresh_token: a.refreshToken },
-      });
+      let r;
+      try {
+        r = await _req('/auth/refresh', {
+          method: 'POST',
+          body: { refresh_token: a.refreshToken },
+        });
+      } catch (err) {
+        if (err && err.status === 401) {
+          await clearAuth();
+          err.sessionExpired = true;
+        }
+        throw err;
+      }
       await saveAuth(r);
       return r;
     },

@@ -41,6 +41,9 @@ async def lifespan(app: FastAPI):
             await db.seed_default_user()
         except Exception:
             log.exception("默认账号播种失败(不阻断启动)")
+    if config.DEV_FIXED_CODE:
+        log.info("开发态固定验证码已启用: %s —— 注册/找回密码统一用此码(生产环境自动禁用)",
+                 config.DEV_FIXED_CODE)
     log.info("ready")
     try:
         yield

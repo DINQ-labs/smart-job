@@ -26,12 +26,18 @@ log = logging.getLogger(__name__)
 # 默认值对齐 portal 生产实际签发参数 —— 注意 portal 生产 .env 把 issuer 覆盖成了
 # api.job.joyhouse.chat（config.py 里的默认是 job.joyhouse.chat，别被它误导）。
 # env 可覆盖；换环境时务必与该环境 portal 的 JWT_ISSUER/JWT_AUDIENCE 对齐。
-JWKS_URL = os.getenv(
-    "PORTAL_JWKS_URL", "https://api.job.joyhouse.chat/.well-known/jwks.json"
-)
-JWT_ISSUER = os.getenv("JWT_ISSUER", "https://api.job.joyhouse.chat")
-JWT_AUDIENCE = os.getenv("JWT_AUDIENCE", "job-portal")
+# os.getenv(...) or "默认" —— 环境变量被设成空字符串（docker-compose ${VAR:-}
+# 常见情况）时也回退默认值，而非取到空串。
+JWKS_URL = (os.getenv("PORTAL_JWKS_URL")
+            or "https://api.job.joyhouse.chat/.well-known/jwks.json")
+JWT_ISSUER = os.getenv("JWT_ISSUER") or "https://api.job.joyhouse.chat"
+JWT_AUDIENCE = os.getenv("JWT_AUDIENCE") or "job-portal"
 _JWKS_TIMEOUT = 8
+
+# SSE / 写路径是否强制鉴权。true（生产 / 公网）：Authorization Bearer 必填且
+# 验签，user_id 一律取 JWT sub。未设（内网 / 开发）：带合法 Bearer 就用 sub，
+# 否则回退调用方传入的 user_id —— 与改造前行为一致。
+AUTH_REQUIRED = os.getenv("AGENT_AUTH_REQUIRED", "").lower() in ("1", "true", "yes")
 
 _keys: dict[str, object] = {}   # kid -> RSA 公钥对象
 
@@ -128,3 +134,33 @@ def require_user(handler):
             return JSONResponse({"ok": False, "error": str(e)}, status_code=401)
         return await handler(request)
     return wrapped
+
+
+async def resolve_user_id(
+    request: Request, fallback_user_id: str
+) -> "tuple[str, JSONResponse | None]":
+    """SSE / 写路径统一身份解析。返回 (user_id, error)。
+
+    error 非 None 时调用方应直接 return 它（401）。
+
+      - 带合法 Bearer → 用 JWT sub（覆盖 fallback；query / header 里的 user_id
+        可被伪造，一律不信）。
+      - 无 / 非法 Bearer：
+          AUTH_REQUIRED=true（生产 / 公网）→ 返回 401。
+          否则（内网 / 开发）              → 用 fallback_user_id，行为同改造前。
+    """
+    token = _bearer(request)
+    if token:
+        try:
+            claims = await asyncio.to_thread(_verify, token)
+            return str(claims.get("sub") or ""), None
+        except AuthError as e:
+            if AUTH_REQUIRED:
+                return "", JSONResponse({"error": f"unauthorized: {e}"}, status_code=401)
+            log.warning("Bearer 验签失败，内网模式回退请求方 user_id：%s", e)
+            return fallback_user_id, None
+    if AUTH_REQUIRED:
+        return "", JSONResponse(
+            {"error": "unauthorized: missing access token"}, status_code=401
+        )
+    return fallback_user_id, None

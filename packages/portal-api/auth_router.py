@@ -45,6 +45,20 @@ log = logging.getLogger("job-portal-api.auth")
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def _dev_hint(send: dict[str, Any]) -> str | None:
+    """注册 / 重发 / 找回密码响应里的 dev 提示,生产环境一律 None(绝不泄露验证码)。
+
+    - 开发态固定码 → 直接回该码本身,扩展面板会原样展示给用户。
+    - 开发态随机码 + 无邮件服务(provider=dev_console)→ 'code_in_server_console',
+      提示用户去服务端日志里看。
+    """
+    if config.DEV_FIXED_CODE:
+        return config.DEV_FIXED_CODE
+    if send.get("provider") == "dev_console":
+        return "code_in_server_console"
+    return None
+
+
 def _user_out(row: Any) -> UserOut:
     return UserOut(
         id=row["id"],
@@ -142,11 +156,7 @@ async def register(body: RegisterReq) -> RegisterResp:
         verification_id=issued.verification_id,
         email=email,
         expires_at=issued.expires_at.isoformat(),
-        dev_hint=(
-            "code_in_server_console"
-            if send.get("provider") == "dev_console"
-            else None
-        ),
+        dev_hint=_dev_hint(send),
     )
 
 
@@ -217,11 +227,7 @@ async def resend_code(body: ResendCodeReq) -> ResendCodeResp:
         sent=True,
         verification_id=issued.verification_id,
         expires_at=issued.expires_at.isoformat(),
-        dev_hint=(
-            "code_in_server_console"
-            if send.get("provider") == "dev_console"
-            else None
-        ),
+        dev_hint=_dev_hint(send),
     )
 
 
@@ -369,11 +375,7 @@ async def request_password_reset(body: PasswordResetReq) -> ResendCodeResp:
         sent=True,
         verification_id=issued.verification_id,
         expires_at=issued.expires_at.isoformat(),
-        dev_hint=(
-            "code_in_server_console"
-            if send.get("provider") == "dev_console"
-            else None
-        ),
+        dev_hint=_dev_hint(send),
     )
 
 
@@ -531,11 +533,7 @@ async def request_account_deletion(
         sent=True,
         verification_id=issued.verification_id,
         expires_at=issued.expires_at.isoformat(),
-        dev_hint=(
-            "code_in_server_console"
-            if send.get("provider") == "dev_console"
-            else None
-        ),
+        dev_hint=_dev_hint(send),
     )
 
 

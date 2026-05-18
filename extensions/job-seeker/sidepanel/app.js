@@ -48,6 +48,7 @@
   const $ = (id) => document.getElementById(id);
   const els = {
     headerHome:          $('headerHome'),
+    headerSettings:      $('headerSettings'),
     headerMode:          $('headerMode'),
     headerModeLabel:     $('headerModeLabel'),
     headerModeDot:       $('headerModeDot'),
@@ -64,6 +65,10 @@
     loginGate:     $('loginGate'),
     gateOpenLogin: $('gateOpenLogin'),
     gateForgotPwd: $('gateForgotPwd'),
+
+    kickBanner:      $('kickBanner'),
+    kickBannerText:  $('kickBannerText'),
+    kickBannerClose: $('kickBannerClose'),
   };
 
   // ── Tab router ────────────────────────────────────────────
@@ -94,6 +99,13 @@
     }
   }
   els.headerHome?.addEventListener('click', goHome);
+
+  // ── 顶栏「⚙️ 设置」→ 打开扩展设置页(配置 portal / api-gw / agent-gw 网关)──
+  // 任意位置(含登录前)都能改网关地址 —— 网关配错会导致登录失败,故须常驻可达。
+  function openSettings() {
+    try { chrome.runtime.openOptionsPage(); } catch (_) {}
+  }
+  els.headerSettings?.addEventListener('click', openSettings);
 
   // ── 顶栏身份 pill → 角色 / 平台切换 ────────────────────────
   // 「Boss · 求职」胶囊显示当前平台 · 角色,点它即开切换向导(onboarding 监听)。
@@ -162,6 +174,22 @@
   function renderLoginGate() {
     els.loginGate.classList.toggle('open', !state.user.loggedIn);
   }
+
+  // ── 连接异常横幅 ──────────────────────────────────────────
+  // 被网关踢出(扩展版本过旧 / 异地登录等)时,顶栏下方常驻红色提示,
+  // 直到重连成功(background 收到 registered)或用户手动关闭。
+  function showKickBanner(reason) {
+    if (!els.kickBanner) return;
+    els.kickBannerText.textContent = reason || '扩展与服务端的连接已断开。';
+    els.kickBanner.hidden = false;
+  }
+  function hideKickBanner() {
+    if (els.kickBanner) els.kickBanner.hidden = true;
+  }
+  els.kickBannerClose?.addEventListener('click', () => {
+    hideKickBanner();
+    try { chrome.storage.local.remove('extKick'); } catch (_) {}
+  });
 
   // ── ContextBar 链接(jobseeker 提示"上传简历"等)─────────
   document.addEventListener('click', (e) => {
@@ -267,10 +295,21 @@
           renderHeader();
           emit(NAMES.CREDIT_UPDATED, state.credit);
           break;
-        case 'connectionState':
-        case 'loggedOut':
         case 'kicked':
+          // 被网关踢出(版本过旧 / 异地登录等)→ 顶部弹常驻提示横幅
+          showKickBanner(msg.reason);
+          loadPlatformStatus().then(renderHeader);
+          break;
         case 'registered':
+          // 重新接入成功 → 收起提示横幅
+          hideKickBanner();
+          loadPlatformStatus().then(renderHeader);
+          break;
+        case 'connectionState':
+          if (msg.connected) hideKickBanner();
+          loadPlatformStatus().then(renderHeader);
+          break;
+        case 'loggedOut':
           loadPlatformStatus().then(renderHeader);
           break;
         case 'DQ_PREFILL_CHAT':
@@ -345,6 +384,12 @@
     renderHeader(); renderContext(); renderLoginGate();
     setupRuntimeListener();
 
+    // 冷启动:若上次连接被踢出且尚未恢复,恢复提示横幅
+    try {
+      const k = await chrome.storage.local.get('extKick');
+      if (k && k.extKick && k.extKick.reason) showKickBanner(k.extKick.reason);
+    } catch (_) {}
+
     // 并发拉远端状态
     loadPlatformStatus().then(renderHeader);
     loadCredit();
@@ -357,6 +402,14 @@
     const stored = await chrome.storage.local.get(['user']);
     if (stored.user?.onboarded) {
       emit(NAMES.ROLE_CHANGED, { role: state.role });
+    }
+
+    // 首屏路由:未登录 → 直接展示「登录 / 注册」表单(login-first);
+    // 已登录但未走完引导 → 续跑角色 / 平台 / 简历引导。
+    if (!state.user.loggedIn) {
+      try { await window.DQ.onboarding?.openLogin?.(); } catch (_) {}
+    } else if (!stored.user?.onboarded) {
+      try { await window.DQ.onboarding?.startOnboarding?.(); } catch (_) {}
     }
 
     console.log('[app] ready · role=%s platform=%s', state.role, state.platform);

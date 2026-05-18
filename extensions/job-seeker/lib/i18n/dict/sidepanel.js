@@ -1,10 +1,12 @@
-/*! DingQ i18n 词典 —— sidepanel 侧边栏(静态外壳:顶栏 / Tab / 登录 Gate) */
+/*! SmartJob i18n 词典 —— sidepanel 侧边栏(静态外壳:顶栏 / Tab / 登录 Gate) */
 ;(function () {
   var ns = {
     zh: {
       'header.home': '首页',
       'header.homeTitle': '返回主页',
       'header.modeTitle': '点此切换角色 / 平台',
+      'header.settingsTitle': '设置 · 配置网关地址',
+      'kick.dismiss': '关闭',
       'tabs.chat': 'AI助手',
       'tabs.tasks': '任务',
       'tabs.bookmarks': '收藏',
@@ -236,6 +238,8 @@
       'header.home': 'Home',
       'header.homeTitle': 'Back to home',
       'header.modeTitle': 'Click to switch role / platform',
+      'header.settingsTitle': 'Settings · configure gateways',
+      'kick.dismiss': 'Dismiss',
       'tabs.chat': 'Assistant',
       'tabs.tasks': 'Tasks',
       'tabs.bookmarks': 'Saved',

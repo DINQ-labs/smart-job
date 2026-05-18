@@ -1,15 +1,15 @@
-/*! DingQ i18n 词典 —— popup 弹窗 */
+/*! SmartJob i18n 词典 —— popup 弹窗 */
 ;(function () {
   var ns = {
     zh: {
-      'popup.title':       'DingQ v3',
-      'popup.h2':          'DingQ v3',
+      'popup.title':       'SmartJob',
+      'popup.h2':          'SmartJob',
       'popup.btn.panel':   '打开侧边栏',
       'popup.btn.options': '设置'
     },
     en: {
-      'popup.title':       'DingQ v3',
-      'popup.h2':          'DingQ v3',
+      'popup.title':       'SmartJob',
+      'popup.h2':          'SmartJob',
       'popup.btn.panel':   'Open Side Panel',
       'popup.btn.options': 'Settings'
     }

@@ -83,8 +83,12 @@
   }
 
   function bodyReset() {
-    const hint = data.devHint === 'code_in_server_console'
-      ? `<div class="fp-dev">${t('forgot.resetStep.devHint')}</div>` : '';
+    let hint = '';
+    if (/^\d{6}$/.test(data.devHint || '')) {
+      hint = `<div class="fp-dev">${t('forgot.resetStep.devHintCode', { code: escapeText(data.devHint) })}</div>`;
+    } else if (data.devHint === 'code_in_server_console') {
+      hint = `<div class="fp-dev">${t('forgot.resetStep.devHint')}</div>`;
+    }
     return `
       <p class="fp-lead">${t('forgot.resetStep.lead', { email: `<b>${escapeText(data.email)}</b>` })}</p>
       ${hint}

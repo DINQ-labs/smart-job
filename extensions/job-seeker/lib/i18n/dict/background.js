@@ -1,4 +1,4 @@
-/*! DingQ i18n 词典 —— background 通知 */
+/*! SmartJob i18n 词典 —— background 通知 */
 ;(function () {
   var ns = {
     zh: {

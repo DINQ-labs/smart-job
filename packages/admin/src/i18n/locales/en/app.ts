@@ -31,5 +31,6 @@ export default {
     clientErrors: 'Client JS Errors',
     chipConfigs: 'Chip Configs',
     growth: 'Growth',
+    operators: 'Admin Accounts',
   },
 }

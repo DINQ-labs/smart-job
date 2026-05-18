@@ -23,7 +23,13 @@ class Purpose(str, Enum):
 
 
 def generate_code() -> str:
-    """6 位数字。`secrets` 而非 `random`：CSPRNG，避免可预测性。"""
+    """6 位数字验证码。
+
+    开发态(config.DEV_FIXED_CODE 非空)返回固定码,免去查邮箱 —— 生产环境该值
+    强制为空,回落到 `secrets` CSPRNG 随机码(非 `random`,避免可预测性)。
+    """
+    if config.DEV_FIXED_CODE:
+        return config.DEV_FIXED_CODE
     return str(secrets.randbelow(900_000) + 100_000)
 
 

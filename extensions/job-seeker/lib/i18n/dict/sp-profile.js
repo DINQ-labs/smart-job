@@ -1,4 +1,4 @@
-/*! DingQ i18n 词典 —— sidepanel 我的/引导/工具 */
+/*! SmartJob i18n 词典 —— sidepanel 我的/引导/工具 */
 ;(function () {
   var ns = {
     zh: {
@@ -233,11 +233,12 @@
       'onboarding.err.codeInvalid': '请输入 6 位数字验证码',
       'onboarding.info.devCode': '开发模式：验证码已打印到 portal-api 终端',
       'onboarding.info.devCodeResent': '新验证码已打印到 portal-api 终端',
+      'onboarding.step3c.devCodeHint': '开发模式 · 验证码为 {code},直接填入即可',
       'onboarding.info.resendOk': '验证码已重新发送，请查收',
       'onboarding.info.resendMaybe': '如该邮箱可重发，验证码已重新发送',
 
       // ── welcome ───────────────────────────────────────────────────
-      'welcome.ariaLabel': 'DingQ 欢迎',
+      'welcome.ariaLabel': 'SmartJob 欢迎',
       'welcome.brand': '招聘助手',
       'welcome.ariaLabelPrev': '上一张',
       'welcome.ariaLabelNext': '下一张',
@@ -338,6 +339,7 @@
       'forgot.emailStep.cancelBtn': '返回登录',
       'forgot.resetStep.lead': '验证码已发送至 {email},请查收邮件.',
       'forgot.resetStep.devHint': '开发环境:验证码已打印在服务端控制台.',
+      'forgot.resetStep.devHintCode': '开发环境 · 验证码为 {code}',
       'forgot.resetStep.codeLabel': '验证码',
       'forgot.resetStep.resendBtn': '没收到?重新发送',
       'forgot.resetStep.codePlaceholder': '6 位数字',
@@ -638,11 +640,12 @@
       'onboarding.err.codeInvalid': 'Please enter the 6-digit verification code',
       'onboarding.info.devCode': 'Dev mode: code printed to portal-api terminal',
       'onboarding.info.devCodeResent': 'New code printed to portal-api terminal',
+      'onboarding.step3c.devCodeHint': 'Dev mode · verification code is {code}',
       'onboarding.info.resendOk': 'Verification code resent — please check your email',
       'onboarding.info.resendMaybe': 'Verification code resent if email is eligible',
 
       // ── welcome ───────────────────────────────────────────────────
-      'welcome.ariaLabel': 'Welcome to DingQ',
+      'welcome.ariaLabel': 'Welcome to SmartJob',
       'welcome.brand': 'Recruitment Assistant',
       'welcome.ariaLabelPrev': 'Previous',
       'welcome.ariaLabelNext': 'Next',
@@ -743,6 +746,7 @@
       'forgot.emailStep.cancelBtn': 'Back to sign in',
       'forgot.resetStep.lead': 'A code was sent to {email} — please check your inbox.',
       'forgot.resetStep.devHint': 'Dev mode: code printed to server console.',
+      'forgot.resetStep.devHintCode': 'Dev mode · verification code is {code}',
       'forgot.resetStep.codeLabel': 'Verification code',
       'forgot.resetStep.resendBtn': 'Didn\'t receive it? Resend',
       'forgot.resetStep.codePlaceholder': '6-digit code',

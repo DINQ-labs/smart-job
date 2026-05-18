@@ -296,10 +296,83 @@ async function initStableBrowserId() {
 // 后台 WS 握手就用这里的 user_id + access token,与 sidepanel 同一套身份。
 // 旧的 dinq.me cookie 身份体系(域名已下线)已整体移除。
 
+/** portal-api(8771)的 HTTP base URL —— 与 sidepanel/shared/auth-api.js portalBase() 同逻辑。 */
+async function getPortalBaseUrl() {
+  const r = await chrome.storage.local.get(['portalApiUrl', 'gatewayHost']);
+  const override = (r.portalApiUrl || '').trim();
+  if (override) return override.replace(/\/+$/, '');
+  const host = r.gatewayHost || '127.0.0.1';
+  if (/^(127\.0\.0\.1|localhost|0\.0\.0\.0|192\.168\.|10\.)/.test(host)) {
+    return `http://${host.split(':')[0]}:8771`;
+  }
+  return 'https://api.job.joyhouse.chat';
+}
+
+/**
+ * 用 refresh token 向 portal-api 换一对新 token,成功则就地写回 storage.local.auth。
+ * WS 握手要的是没过期的 access token —— portal access token 仅 15min,后台长连接
+ * 重连时几乎必然已过期。不先刷新就拿过期 token 握手,EXT_AUTH_REQUIRED 的网关会
+ * 接受握手随即关闭 → 后台陷入"连上又断开"重连死循环,后台始终显示扩展离线。
+ *   200 → 写回新 token        401 → refresh 凭证已废,清登录态(需重新登录)
+ *   网络错误 / 5xx → 保留旧 auth,留待下次重连重试
+ * 与 sidepanel/shared/auth-api.js 的 refresh() 同契约。
+ */
+async function refreshPortalToken(refreshToken) {
+  let base;
+  try { base = await getPortalBaseUrl(); } catch (_) { return; }
+  let resp;
+  try {
+    resp = await fetch(`${base}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (e) {
+    console.warn('[boss-api-ext] portal token 刷新网络错误,保留旧登录态:', e.message || e);
+    return;
+  }
+  if (resp.status === 401) {
+    await chrome.storage.local.remove(['auth', 'userId']);
+    console.warn('[boss-api-ext] portal refresh 被拒(401):会话已失效,需在侧栏重新登录');
+    return;
+  }
+  if (!resp.ok) {
+    console.warn('[boss-api-ext] portal token 刷新失败 HTTP', resp.status, ',保留旧登录态');
+    return;
+  }
+  let data;
+  try { data = await resp.json(); } catch (_) { return; }
+  const t = (data && data.tokens) || {};
+  if (!t.access_token) return;
+  await chrome.storage.local.set({
+    auth: {
+      accessToken:      t.access_token,
+      refreshToken:     t.refresh_token,
+      accessExpiresAt:  t.access_expires_at,
+      refreshExpiresAt: t.refresh_expires_at,
+      user:             data.user,
+      issuedAt:         Math.floor(Date.now() / 1000),
+    },
+    userId: (data.user && data.user.id) || '',
+  });
+  console.log('[boss-api-ext] portal access token 已刷新');
+}
+
 async function loadAuthIdentity() {
   try {
-    const r = await chrome.storage.local.get(['auth', 'userId']);
-    const auth = r.auth || {};
+    let r = await chrome.storage.local.get(['auth', 'userId']);
+    let auth = r.auth || {};
+    // access token 过期/临期(剩余 <60s)→ 先用 refresh token 换新再握手。
+    if (auth.accessToken && auth.refreshToken) {
+      const now = Math.floor(Date.now() / 1000);
+      const stale = !auth.accessExpiresAt || auth.accessExpiresAt <= now + 60;
+      if (stale) {
+        await refreshPortalToken(auth.refreshToken);
+        r = await chrome.storage.local.get(['auth', 'userId']);  // 重读刷新结果
+        auth = r.auth || {};
+      }
+    }
     PERSONAL_USER_ID    = (auth.user && auth.user.id) || r.userId || '';
     PORTAL_ACCESS_TOKEN = auth.accessToken || '';
   } catch (_) {
@@ -402,6 +475,28 @@ function notifyPopup(msg) {
   } catch (_) {}
 }
 
+// 被网关踢出时:工具栏图标打红色「!」角标 + 落盘 extKick,sidepanel 据此弹横幅。
+// 即使侧边栏未打开,用户也能从角标察觉异常。
+function flagKicked(reason) {
+  try {
+    chrome.action?.setBadgeText?.({ text: '!' });
+    chrome.action?.setBadgeBackgroundColor?.({ color: '#dc2626' });
+    chrome.action?.setTitle?.({ title: 'SmartJob — ' + (reason || '连接已断开') });
+  } catch (_) {}
+  try {
+    chrome.storage.local.set({ extKick: { reason: reason || '', at: Date.now() } });
+  } catch (_) {}
+}
+
+// 重新接入成功 → 清掉角标与 extKick 标记。
+function clearKickedFlag() {
+  try {
+    chrome.action?.setBadgeText?.({ text: '' });
+    chrome.action?.setTitle?.({ title: '' });
+  } catch (_) {}
+  try { chrome.storage.local.remove('extKick'); } catch (_) {}
+}
+
 // ── 网关消息处理 ──────────────────────────────────────────────────────────
 
 async function handleGatewayMessage(rawData) {
@@ -429,17 +524,22 @@ async function handleGatewayMessage(rawData) {
   }
 
   if (msg.type === 'kicked') {
-    console.warn('[boss-api-ext] 被服务端踢出:', msg.reason || '另一台设备已接入');
+    const reason = msg.reason || '另一台设备已接入，当前连接已断开';
+    console.warn('[boss-api-ext] 被服务端踢出:', reason);
     // 必须先停止自动重连，否则 ws.onclose 触发后会立即重连，产生踢人风暴
     autoReconnect = false;
     if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
-    notifyPopup({ type: 'kicked', reason: msg.reason || '另一台设备已接入，当前连接已断开' });
+    // 工具栏角标 + sidepanel 横幅:让用户明确看到「为什么断了、怎么办」
+    flagKicked(reason);
+    notifyPopup({ type: 'kicked', reason });
     return;
   }
 
   if (msg.type === 'registered') {
     currentSessionId = msg.sessionId || '';
     console.log('[boss-api-ext] 注册成功, browserId:', msg.browserId, 'sessionId:', currentSessionId.slice(0, 16));
+    // 重新接入成功 → 清掉「被踢出」角标与横幅标记
+    clearKickedFlag();
     // 审核补丁 #R3：await applyProxy，确保队列里紧跟着的命令用新代理发请求。
     // 之前用 .catch() 放行，若网关在 registered 之后紧接着派发命令（自动化场景
     // 常见），前几个请求会走旧/无代理，触发 Boss 侧地域风控。

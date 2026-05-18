@@ -31,5 +31,6 @@ export default {
     clientErrors: '前端 JS 错误',
     chipConfigs: '快捷指令配置',
     growth: 'Growth',
+    operators: '管理员账号',
   },
 }

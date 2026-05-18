@@ -9,7 +9,9 @@ _anthropic_key  = os.getenv("ANTHROPIC_API_KEY", "")
 
 if _openrouter_key:
     API_KEY  = _openrouter_key
-    BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    # 注意:这是 Anthropic SDK 的 base_url,SDK 自身会追加 /v1/messages。
+    # 因此这里只到 .../api,不要带 /v1 —— 否则拼成 .../api/v1/v1/messages → 404。
+    BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api")
 elif _anthropic_key:
     API_KEY  = _anthropic_key
     BASE_URL = os.getenv("ANTHROPIC_BASE_URL", "")

@@ -10,12 +10,14 @@ load_dotenv()
 
 import asyncio
 import contextvars
+import hmac
 import inspect
 import json
 import logging
 import os
 from typing import Any
 
+import bcrypt
 from fastmcp import Context
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -28,6 +30,14 @@ import admin_broadcaster as ab
 
 log = logging.getLogger(__name__)
 
+# 扩展 WS 握手的 portal JWT 验签依赖 PyJWT;未安装时降级 —— 仅静态 EXT_TOKEN /
+# open(内网)模式仍可用,JWT 模式不可用。
+try:
+    import portal_auth  # noqa: E402
+except Exception as _e:  # pragma: no cover
+    portal_auth = None
+    log.warning("portal_auth 不可用(PyJWT 未安装?):扩展 WS 的 portal JWT 验签已关闭 —— %s", _e)
+
 # ── 请求级 DINQ user_id ────────────────────────────────────────────────────
 _current_user_id: contextvars.ContextVar[str] = contextvars.ContextVar("current_user_id", default="")
 # Phase 2: agent role(jobseeker/recruiter)— 同 user 同时连两个 ext 时,
@@ -35,12 +45,75 @@ _current_user_id: contextvars.ContextVar[str] = contextvars.ContextVar("current_
 _current_role: contextvars.ContextVar[str] = contextvars.ContextVar("current_role", default="")
 
 # ── Admin 认证 ─────────────────────────────────────────────────────────────
+# ADMIN_PASSWORD:鉴权开关 + 首个管理账号(admin)的初始口令种子。设置后,
+# admin_users 表为空时自动播种 username=admin;之后登录改走 admin_users 表
+# —— bcrypt 哈希、支持多账号、可改密(见 http_routes 的 /admin/users、/admin/password)。
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 COOKIE_NAME = "boss_admin_token"
-_admin_tokens: set[str] = set()
+# 会话 token → 管理员用户名(内存态,网关重启即失效,需重新登录)。
+_admin_tokens: dict[str, str] = {}
 
-# ── 扩展 WebSocket 连接 token ──────────────────────────────────────────────
+# bcrypt cost=12:2026 年硬件单次 ~150ms,登录端足够慢、单机不被打爆。
+_BCRYPT_COST = 12
+
+
+def _hash_admin_password(password: str) -> str:
+    """bcrypt 哈希管理员口令。超 72 字节(bcrypt 上限)抛 ValueError。"""
+    pw = password.encode("utf-8")
+    if len(pw) > 72:
+        raise ValueError("password_too_long")
+    return bcrypt.hashpw(pw, bcrypt.gensalt(rounds=_BCRYPT_COST)).decode("utf-8")
+
+
+def _verify_admin_password(password: str, hashed: str) -> bool:
+    """校验明文口令与 bcrypt 哈希;任何异常都按校验失败处理。"""
+    try:
+        pw = password.encode("utf-8")
+        if len(pw) > 72:
+            return False
+        return bcrypt.checkpw(pw, (hashed or "").encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
+
+# ── 扩展 WebSocket 连接鉴权 ────────────────────────────────────────────────
+# EXT_TOKEN: 扩展 WS 握手的静态共享密钥(整支扩展车队共用一个值)。
+# EXT_AUTH_REQUIRED: 即使没配静态密钥也强制鉴权(只接受 portal JWT)。
+# 两者都没配 → 内网/开发模式:放行(仅打 warning),与 ADMIN_PASSWORD 留空即放行同惯例。
 EXT_TOKEN = os.environ.get("EXT_TOKEN", "")
+_EXT_AUTH_REQUIRED = os.environ.get("EXT_AUTH_REQUIRED", "").lower() in ("1", "true", "yes")
+EXT_AUTH_ENFORCED = _EXT_AUTH_REQUIRED or bool(EXT_TOKEN)
+
+
+async def authenticate_extension(token: str, claimed_user_id: str) -> tuple[bool, str, str]:
+    """校验扩展 WebSocket 握手 token,返回 (ok, user_id, mode)。
+
+    扩展握手会在 query 里带 token=(EXT_TOKEN 或 portal access token,见扩展
+    background/index.js)。校验优先级:
+
+      - token 是有效 portal JWT → (True, JWT sub, "jwt")
+        user_id 以验过签的 sub 为准,使按 user_id 的踢人逻辑无法被伪造。
+      - token == 静态 EXT_TOKEN → (True, claimed_user_id, "static")
+        共享密钥模式:无 per-user 身份,沿用握手 query 里的 user_id。
+      - 未启用强制鉴权          → (True, claimed_user_id, "open")
+        内网/开发:放行。
+      - 其余                    → (False, "", "rejected")
+    """
+    token = (token or "").strip()
+    # portal JWT 优先(最强:user_id 绑定到验过签的 sub)
+    if portal_auth is not None and token.count(".") == 2:
+        try:
+            claims = await asyncio.to_thread(portal_auth.verify_token, token)
+            return True, str(claims.get("sub") or ""), "jwt"
+        except portal_auth.AuthError as e:
+            log.debug("扩展 WS JWT 验签未通过(回退静态 token / open): %s", e)
+        except Exception as e:
+            log.warning("扩展 WS JWT 验签异常(回退静态 token / open): %s", e)
+    # 静态共享密钥(constant-time 比较)
+    if EXT_TOKEN and token and hmac.compare_digest(token, EXT_TOKEN):
+        return True, claimed_user_id, "static"
+    if not EXT_AUTH_ENFORCED:
+        return True, claimed_user_id, "open"
+    return False, "", "rejected"
 
 # ── 内网代理校验 ──────────────────────────────────────────────────────────
 _REQUIRE_INTERNAL_AUTH = os.environ.get("REQUIRE_INTERNAL_AUTH", "").lower() == "true"

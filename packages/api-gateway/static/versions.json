@@ -1,16 +1,16 @@
 {
   "jobseeker": {
-    "version": "2.0.1",
+    "version": "0.8",
     "commit": "",
-    "min_compatible": "2.0.0",
-    "download_url": "https://testapi.dinq.me/ext/download?ext=jobseeker",
+    "min_compatible": "0.8",
+    "download_url": "",
     "chrome_store_url": ""
   },
   "recruiter": {
-    "version": "1.0.1",
+    "version": "0.8",
     "commit": "",
-    "min_compatible": "1.0.0",
-    "download_url": "https://testapi.dinq.me/ext/download?ext=recruiter",
+    "min_compatible": "0.8",
+    "download_url": "",
     "chrome_store_url": ""
   }
 }

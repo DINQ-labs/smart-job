@@ -1,8 +1,9 @@
 /*
  * modules/onboarding.js — 通用 onboarding 5 步 wizard(DESIGN.md §6.2 ob-*).
  *
- * 时序:welcome.js 完成后(派 'dq:welcome-done')→ 本 wizard 开 → 走完写 onboarded=true.
- *      已 onboarded 的 user 跳过.
+ * 时序:扩展首屏即「登录 / 注册」(openLogin → Step 3,login-first)。登录成功后
+ *      afterAccountReady() 续跑 Step 1 角色选择 → 平台 → 平台登录 → 简历,走完写 onboarded=true.
+ *      app.js 启动路由:未登录 → openLogin();已登录未引导 → startOnboarding().
  *
  * 步骤:
  *   1 · 选择身份     jobseeker / recruiter,点即选(无确定按钮)
@@ -85,12 +86,14 @@
     accountEmail: '',
     accountOk: false, // step 3 完成?
     preAuthed: false, // 进 wizard 时已登录(如「切换角色」)→ 跳过 Step 3 不重登
+    loginFirst: false,// 由 openLogin() 进入:Step 3 作为扩展首屏(无返回 / 无进度条)
     alreadyOnboarded: false, // 之前已完成过引导 → 跳过 Step 5(简历/偏好),不重复弹
     platOk: false,    // step 4 平台已登录?
     detectTimer: null,
     // 邮箱注册/登录表单
     mode: 'signup',         // 'signup' | 'signin'，控制 step 3 表单 CTA
     verificationId: '',     // step 3 → 3c 传递的 verification_id
+    devCode: '',            // 开发态固定验证码(后端 dev_hint 回的 6 位码)→ 注册面板直显
     error: '',              // 表单错误（空即隐藏）
     info: '',               // 表单提示（重发成功 / dev 模式提醒）
     busy: false,            // 提交进行中，禁用 CTA
@@ -140,6 +143,7 @@
           <span class="ob-bot" aria-hidden="true">🏠</span>
           <span class="ob-brand">${t('onboarding.home')}</span>
         </button>
+        <button type="button" class="ob-settings" id="obSettings" title="${t('header.settingsTitle')}">⚙️</button>
       </header>`;
   }
 
@@ -214,8 +218,8 @@
       : t('onboarding.step3.descSignin');
     return `
       ${renderHood()}
-      ${renderBack()}
-      ${renderProgress(3)}
+      ${state.loginFirst ? '' : renderBack()}
+      ${state.loginFirst ? '' : renderProgress(3)}
       <div class="ob-body">
         <h2 class="ob-title">${t('onboarding.step3.title')}</h2>
         <p class="ob-desc">${desc}</p>
@@ -268,6 +272,8 @@
       <div class="ob-body">
         <h2 class="ob-title">${t('onboarding.step3c.title')}</h2>
         <p class="ob-desc">${t('onboarding.step3c.desc', { email: escapeText(target) })}</p>
+
+        ${state.devCode ? `<div class="ob-form-info" style="margin-top:var(--sp-2)">${t('onboarding.step3c.devCodeHint', { code: escapeText(state.devCode) })}</div>` : ''}
 
         <form id="obCodeForm" novalidate>
           <input type="text" class="ob-code-input" id="obCode"
@@ -799,6 +805,9 @@
   function bind() {
     mask.querySelector('#obBack')?.addEventListener('click', back);
     mask.querySelector('#obHome')?.addEventListener('click', goHomeFromWizard);
+    mask.querySelector('#obSettings')?.addEventListener('click', () => {
+      try { chrome.runtime.openOptionsPage(); } catch (_) {}
+    });
     // step 1
     mask.querySelectorAll('[data-role]').forEach(el => {
       el.addEventListener('click', () => {
@@ -923,6 +932,26 @@
     render();
   }
 
+  // 账号登录 / 注册成功后的去向:
+  //   - 老用户(已完成过引导)→ 关向导,直接进 AI 助手;
+  //   - 新用户 → 续跑引导。账号已就绪(preAuthed),Step 2 选完平台直接跳 Step 4。
+  //     已选过角色 / 平台的 → 直接到 Step 4 平台登录,否则从 Step 1 角色选择起。
+  function afterAccountReady() {
+    state.loginFirst = false;
+    if (state.alreadyOnboarded) {
+      close();
+      try { window.DQ.app?.switchTab?.('chat'); } catch (_) {}
+      return;
+    }
+    if (state.role && state.platform) {
+      state.step = 4;
+      startPlatformDetect();
+    } else {
+      state.step = 1;
+    }
+    render();
+  }
+
   // ── 邮箱表单：注册 / 登录 ───────────────────────────────────────
   async function submitEmailForm() {
     const emailEl = mask.querySelector('#obEmail');
@@ -954,7 +983,10 @@
       if (state.mode === 'signup') {
         const r = await api.register({ email, password });
         state.verificationId = r.verification_id;
-        if (r.dev_hint === 'code_in_server_console') {
+        // dev_hint 是 6 位数字 → 开发态固定验证码,注册面板直接展示;
+        // 'code_in_server_console' → 随机码,提示去 portal-api 日志里看。
+        state.devCode = /^\d{6}$/.test(r.dev_hint || '') ? r.dev_hint : '';
+        if (!state.devCode && r.dev_hint === 'code_in_server_console') {
           state.info = t('onboarding.info.devCode');
         }
         state.step = '3c';
@@ -965,10 +997,9 @@
         await api.login({ email, password });
         state.accountMethod = 'email';
         state.accountOk = true;
+        state.preAuthed = true;
         state.busy = false;
-        state.step = 4;
-        startPlatformDetect();
-        render();
+        afterAccountReady();
       }
     } catch (err) {
       state.busy = false;
@@ -1003,9 +1034,8 @@
       state.busy = false;
       state.accountMethod = 'email';
       state.accountOk = true;
-      state.step = 4;
-      startPlatformDetect();
-      render();
+      state.preAuthed = true;
+      afterAccountReady();
     } catch (err) {
       state.busy = false;
       state.error = formatAuthError(err);
@@ -1025,6 +1055,7 @@
       const r = await api.resendCode({ email: state.accountEmail });
       if (r.sent && r.verification_id) {
         state.verificationId = r.verification_id;
+        if (/^\d{6}$/.test(r.dev_hint || '')) state.devCode = r.dev_hint;
         state.info = r.dev_hint === 'code_in_server_console'
           ? t('onboarding.info.devCodeResent')
           : t('onboarding.info.resendOk');
@@ -1216,38 +1247,32 @@
   }
 
   // ── 启动时机 ───────────────────────────────────────────────────
-  async function maybeFirstRun() {
+  // 续跑引导:从 Step 1 角色选择起。由 app.js 启动路由调用 ——
+  //   - login-first 登录成功后的新用户(经 afterAccountReady → Step 1);
+  //   - 「已登录但未走完引导」的用户(冷启动直接进引导)。
+  // 启动首屏由 app.js 统一路由(未登录 → openLogin;已登录未引导 → 本函数)。
+  async function startOnboarding() {
+    let u = {};
     try {
       const r = await chrome.storage.local.get(['user']);
-      const u = (r && r.user) || {};
-      if (!u.welcomed) return;   // welcome.js 没走完,等它的 'dq:welcome-done'
-      if (u.onboarded) return;
-      // 已有 role/platform 缓存就预填(用户中途离开 v3 重启回来)
-      if (u.role) state.role = u.role;
-      if (u.platform) state.platform = u.platform;
-      open();
+      u = (r && r.user) || {};
     } catch (_) {}
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', maybeFirstRun);
-  } else {
-    setTimeout(maybeFirstRun, 0);
-  }
-  window.addEventListener('dq:welcome-done', () => {
-    // 重置 state(用户走完 welcome 后才进入 onboarding 第一步)
     state.step = 1;
-    state.role = '';
-    state.platform = '';
-    state.accountMethod = '';
-    state.accountEmail = '';
+    state.role = u.role || '';
+    state.platform = u.platform || '';
+    state.accountMethod = u.account_method || '';
+    state.accountEmail = u.email || '';
     state.accountOk = false;
-    state.preAuthed = false;
-    state.alreadyOnboarded = false;
+    state.alreadyOnboarded = !!u.onboarded;
+    state.preAuthed = await isLoggedIn();
+    if (state.preAuthed) state.accountOk = true;
+    state.loginFirst = false;
     state.platOk = false;
+    state.error = '';
+    state.info = '';
     resetStep5();
     open();
-  });
+  }
 
   // 已登录判定:本地有 access / refresh token 即视为登录态
   async function isLoggedIn() {
@@ -1292,8 +1317,8 @@
     state.confirmedPrefs = null;
   }
 
-  // 从「登录 Gate」直接进入扩展内登录:预填已存的 role/platform,默认登录模式;
-  // 有 role/platform 直接到 Step 3 登录步,否则从 Step 1 走完整引导。
+  // 扩展首屏「登录 / 注册」:Step 3 邮箱表单作为第一屏直接呈现
+  // (loginFirst → 无返回键 / 无进度条)。预填已存的 role/platform 供登录成功后续跑引导。
   async function openLogin() {
     try {
       const r = await chrome.storage.local.get(['user']);
@@ -1307,14 +1332,15 @@
     state.accountOk = false;
     state.preAuthed = false;
     state.platOk = false;
-    state.mode = 'signin';      // 老用户回来默认登录;表单内可切「注册」
+    state.mode = 'signin';      // 默认登录;表单内 [登录|注册] 可切
+    state.loginFirst = true;    // Step 3 作为首屏
     state.error = '';
     state.info = '';
     resetStep5();
-    state.step = (state.role && state.platform) ? 3 : 1;
+    state.step = 3;             // 直接进登录 / 注册表单,不再先走角色 / 平台
     open();
   }
 
   window.DQ = window.DQ || {};
-  window.DQ.onboarding = { open, close, openLogin };
+  window.DQ.onboarding = { open, close, openLogin, startOnboarding };
 })();

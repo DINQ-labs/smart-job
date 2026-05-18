@@ -27,6 +27,7 @@ import McpMetricsPage from './pages/McpMetricsPage.vue'
 import ClientErrorsPage from './pages/ClientErrorsPage.vue'
 import ChipConfigsPage from './pages/ChipConfigsPage.vue'
 import PortalUsersPage from './pages/PortalUsersPage.vue'
+import AdminUsersPage from './pages/AdminUsersPage.vue'
 import AutofillTemplatesPage from './pages/AutofillTemplatesPage.vue'
 import AutofillCapturesPage from './pages/AutofillCapturesPage.vue'
 import { useAuthStore } from './stores/auth'
@@ -60,6 +61,7 @@ const router = createRouter({
     { path: '/client-errors', component: ClientErrorsPage },
     { path: '/chip-configs',  component: ChipConfigsPage },
     { path: '/portal-users', component: PortalUsersPage },
+    { path: '/operators', component: AdminUsersPage },
   ],
 })
 

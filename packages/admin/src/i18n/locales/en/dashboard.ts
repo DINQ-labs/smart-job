@@ -1,5 +1,4 @@
 export default {
-  evolveDesc: 'Capture-driven automatic code transformation (standalone service, port 8770)',
   extSessions: 'Extension Sessions',
   refresh: 'Refresh',
   emptyExtLine1: 'No extension connections yet.',

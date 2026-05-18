@@ -1,4 +1,4 @@
-/*! DingQ i18n 词典 —— sidepanel 表单自动填写子系统 */
+/*! SmartJob i18n 词典 —— sidepanel 表单自动填写子系统 */
 ;(function () {
   var ns = {
     zh: {

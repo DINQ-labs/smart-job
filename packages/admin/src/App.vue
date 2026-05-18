@@ -1,7 +1,7 @@
 <template>
   <div class="app-layout">
     <nav v-if="auth.authenticated" class="sidebar">
-      <div class="logo">Job Admin</div>
+      <div class="logo">SmartJob</div>
       <router-link to="/" class="nav-item" active-class="active">
         <span class="nav-icon">📊</span> {{ t('app.nav.dashboard') }}
       </router-link>
@@ -81,6 +81,9 @@
       </router-link>
       <router-link to="/growth" class="nav-item" active-class="active">
         <span class="nav-icon">📈</span> {{ t('app.nav.growth') }}
+      </router-link>
+      <router-link to="/operators" class="nav-item" active-class="active">
+        <span class="nav-icon">🛡️</span> {{ t('app.nav.operators') }}
       </router-link>
       <div class="sidebar-spacer" />
       <button class="lang-btn" @click="toggleLocale">

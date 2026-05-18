@@ -1,5 +1,7 @@
 export default {
   subtitle: '管理后台登录',
+  username: '用户名',
+  usernamePh: '请输入用户名',
   password: '密码',
   passwordPh: '请输入管理密码',
   loggingIn: '登录中...',

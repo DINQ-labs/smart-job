@@ -18,9 +18,10 @@ dist-ssr/
 .vite/
 
 # ── 环境变量 / 密钥（绝不入库）──────────────────────────
+# .env 及其所有变体一律忽略;只有 *.example 模板入库。
 .env
-.env.local
-.env.*.local
+.env.*
+!.env*.example
 *.pem
 packages/portal-api/keys/
 

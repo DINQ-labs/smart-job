@@ -843,6 +843,15 @@ class _PostgresBackend(_DbBackend):
         )
         """,
         "CREATE INDEX IF NOT EXISTS idx_stripe_evt_type ON stripe_events(event_type, received_at DESC)",
+        """
+        CREATE TABLE IF NOT EXISTS admin_users (
+            id            SERIAL PRIMARY KEY,
+            username      TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at    TEXT NOT NULL DEFAULT '',
+            last_login_at TEXT
+        )
+        """,
     ]
 
     async def init(self) -> None:
@@ -3247,4 +3256,71 @@ async def mark_stripe_event_processed(event_id: str, error: str = "") -> None:
         """UPDATE stripe_events SET processed_at=NOW(), process_error=$2
            WHERE event_id=$1""",
         event_id, error or "",
+    )
+
+
+# ── 管理后台账号（admin_users 表）────────────────────────────────────────────
+# 管理后台登录账号。密码以 bcrypt 哈希存储;ADMIN_PASSWORD 仅作首次播种种子。
+
+async def count_admin_users() -> int:
+    pool = await _get_pg_pool()
+    if pool is None:
+        return 0
+    return int(await pool.fetchval("SELECT COUNT(*) FROM admin_users") or 0)
+
+
+async def get_admin_user(username: str) -> dict | None:
+    pool = await _get_pg_pool()
+    if pool is None or not username:
+        return None
+    row = await pool.fetchrow("SELECT * FROM admin_users WHERE username=$1", username)
+    return dict(row) if row else None
+
+
+async def list_admin_users() -> list[dict]:
+    pool = await _get_pg_pool()
+    if pool is None:
+        return []
+    rows = await pool.fetch(
+        "SELECT id, username, created_at, last_login_at FROM admin_users ORDER BY id"
+    )
+    return [dict(r) for r in rows]
+
+
+async def create_admin_user(username: str, password_hash: str) -> dict:
+    pool = await _get_pg_pool()
+    if pool is None:
+        raise RuntimeError("db_unavailable")
+    row = await pool.fetchrow(
+        "INSERT INTO admin_users (username, password_hash, created_at) "
+        "VALUES ($1, $2, $3) RETURNING id, username, created_at",
+        username, password_hash, _utc_now(),
+    )
+    return dict(row)
+
+
+async def delete_admin_user(user_id: int) -> None:
+    pool = await _get_pg_pool()
+    if pool is None:
+        return
+    await pool.execute("DELETE FROM admin_users WHERE id=$1", user_id)
+
+
+async def set_admin_password(username: str, password_hash: str) -> None:
+    pool = await _get_pg_pool()
+    if pool is None:
+        return
+    await pool.execute(
+        "UPDATE admin_users SET password_hash=$1 WHERE username=$2",
+        password_hash, username,
+    )
+
+
+async def touch_admin_login(username: str) -> None:
+    pool = await _get_pg_pool()
+    if pool is None:
+        return
+    await pool.execute(
+        "UPDATE admin_users SET last_login_at=$1 WHERE username=$2",
+        _utc_now(), username,
     )

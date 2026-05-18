@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>DingQ v3 · 设置</title>
+<title>SmartJob · 设置</title>
 <link rel="stylesheet" href="../sidepanel/styles/tokens.css">
 <link rel="stylesheet" href="../sidepanel/styles/reset.css">
 <link rel="stylesheet" href="../sidepanel/styles/components.css">
@@ -169,7 +169,7 @@
 </style>
 </head>
 <body>
-  <h1 data-i18n="options.h1" style="display:flex;align-items:center;justify-content:space-between;">DingQ v3 · 设置<button data-i18n-switch type="button" style="cursor:pointer;padding:2px 8px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:12px">中/EN</button></h1>
+  <h1 data-i18n="options.h1" style="display:flex;align-items:center;justify-content:space-between;">SmartJob · 设置<button data-i18n-switch type="button" style="cursor:pointer;padding:2px 8px;border:1px solid #ccc;border-radius:10px;background:#fff;font-size:12px">中/EN</button></h1>
 
   <h2 data-i18n="options.section.backend">后端地址</h2>
   <div class="panel">
@@ -178,9 +178,9 @@
         <span class="top" data-i18n="options.preset.dev">开发环境</span>
         <span data-i18n="options.preset.dev.addr">本地 127.0.0.1</span>
       </button>
-      <button type="button" data-preset="prod">
-        <span class="top" data-i18n="options.preset.prod">线上环境</span>
-        <span>job.joyhouse.chat</span>
+      <button type="button" data-preset="demo">
+        <span class="top" data-i18n="options.preset.demo">演示环境</span>
+        <span>api.smartjob.top</span>
       </button>
       <button type="button" data-preset="custom">
         <span class="top" data-i18n="options.preset.custom">自定义</span>
@@ -190,15 +190,15 @@
 
     <div class="field">
       <label for="portalApiUrl" data-i18n="options.label.portalApi">portal-api（账号 / 鉴权）</label>
-      <input type="text" id="portalApiUrl" placeholder="https://api.job.joyhouse.chat">
+      <input type="text" id="portalApiUrl" placeholder="https://api.smartjob.top/portal">
     </div>
     <div class="field">
       <label for="apiGwUrl" data-i18n="options.label.apiGw">api-gw（命令网关 / WebSocket）</label>
-      <input type="text" id="apiGwUrl" placeholder="https://control.job.joyhouse.chat">
+      <input type="text" id="apiGwUrl" placeholder="https://api.smartjob.top">
     </div>
     <div class="field">
       <label for="agentGwUrl" data-i18n="options.label.agentGw">agent-gw（Agent 对话 / 录制上送）</label>
-      <input type="text" id="agentGwUrl" placeholder="https://agent.job.joyhouse.chat">
+      <input type="text" id="agentGwUrl" placeholder="https://api.smartjob.top/agent-gw">
     </div>
 
     <div class="row-buttons">
@@ -208,6 +208,20 @@
     </div>
 
     <div id="healthRows" hidden style="display:flex;flex-direction:column;gap:var(--sp-1)"></div>
+  </div>
+
+  <h2 data-i18n="options.section.conn">扩展连接</h2>
+  <div class="panel">
+    <div class="account" id="connRow">
+      <div class="info">
+        <span class="email"><span class="health-dot" id="connDot"></span> <span id="connText" data-i18n="options.conn.checking">检测中…</span></span>
+        <span class="uid" id="connMeta"></span>
+      </div>
+      <button class="btn-secondary" id="connRefreshBtn" type="button" data-i18n="options.conn.refresh">刷新</button>
+    </div>
+    <div style="font-size:var(--text-xs); color:var(--muted); line-height:var(--leading-relaxed)" data-i18n="options.conn.hint">
+      “已连接”表示后台 WebSocket 已接入 api-gw（命令网关）。未连接时请确认已在 sidepanel 登录、且后端地址可达。
+    </div>
   </div>
 
   <h2 data-i18n="options.section.account">账号</h2>

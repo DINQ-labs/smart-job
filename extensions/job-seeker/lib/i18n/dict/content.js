@@ -1,4 +1,4 @@
-/*! DingQ i18n 词典 —— content 注入 UI */
+/*! SmartJob i18n 词典 —— content 注入 UI */
 ;(function () {
   var ns = {
     zh: {
@@ -25,14 +25,14 @@
       'content.batchBarJobLabel': '职位',
       'content.batchBarCandidateLabel': '候选人',
       'content.evalBtn': '评估',
-      'content.evalBtnTitle': 'DingQ:对比简历给出匹配度分数',
+      'content.evalBtnTitle': 'SmartJob:对比简历给出匹配度分数',
       'content.evalLoading': '评估中…',
       'content.evalRetry': '重试',
       'content.evalCommErr': '通信失败',
       'content.evalBackendErr': '后端错误',
       'content.evalTimeoutTitle': '请求超时(45s)，请确保扩展已重载并重新打开本页',
       'content.evalNeedResume': '请先上传简历',
-      'content.evalNeedResumeTitle': '点击打开 DingQ 助手上传简历',
+      'content.evalNeedResumeTitle': '点击打开 SmartJob 助手上传简历',
       'content.evalViewDetail': '查看详情',
       'content.applyBannerText': 'AI 已填写大部分字段，请检查并补全剩余必填项',
       'content.aiAnalyzeJobPrompt': '分析这个职位「{title}」和我的简历匹配度，给出评分和建议。',
@@ -66,14 +66,14 @@
       'content.batchBarJobLabel': 'Jobs',
       'content.batchBarCandidateLabel': 'Candidates',
       'content.evalBtn': 'Evaluate',
-      'content.evalBtnTitle': 'DingQ: Score resume match for this job',
+      'content.evalBtnTitle': 'SmartJob: Score resume match for this job',
       'content.evalLoading': 'Evaluating…',
       'content.evalRetry': 'Retry',
       'content.evalCommErr': 'Communication failed',
       'content.evalBackendErr': 'Backend error',
       'content.evalTimeoutTitle': 'Request timed out (45s). Reload the extension and reopen this page.',
       'content.evalNeedResume': 'Upload Resume First',
-      'content.evalNeedResumeTitle': 'Click to open DingQ assistant and upload your resume',
+      'content.evalNeedResumeTitle': 'Click to open SmartJob assistant and upload your resume',
       'content.evalViewDetail': 'View Details',
       'content.applyBannerText': 'AI has filled most fields — please review and complete any remaining required fields',
       'content.aiAnalyzeJobPrompt': 'Analyze how well this job "{title}" matches my resume and provide a score with recommendations.',

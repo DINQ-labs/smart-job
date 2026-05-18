@@ -94,7 +94,7 @@
     btn.className = BTN_CLASS;
     btn.type = 'button';
     btn.textContent = (typeof t === 'function' ? t('content.evalBtn') : '评估');
-    btn.title = (typeof t === 'function' ? t('content.evalBtnTitle') : 'DingQ:对比简历给出匹配度分数');
+    btn.title = (typeof t === 'function' ? t('content.evalBtnTitle') : 'SmartJob:对比简历给出匹配度分数');
 
     const badge = document.createElement('span');
     badge.className = BADGE_CLASS;
@@ -174,7 +174,7 @@
         if (resp.has_resume === false) {
           btn.classList.add('dq-need-resume');
           btn.textContent = (typeof t === 'function' ? t('content.evalNeedResume') : '请先上传简历');
-          btn.title = (typeof t === 'function' ? t('content.evalNeedResumeTitle') : '点击打开 DingQ 助手上传简历');
+          btn.title = (typeof t === 'function' ? t('content.evalNeedResumeTitle') : '点击打开 SmartJob 助手上传简历');
           btn.onclick = (e) => {
             e.preventDefault(); e.stopPropagation();
             chrome.runtime.sendMessage({ type: 'DQ_OPEN_PROFILE' });

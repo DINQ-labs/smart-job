@@ -53,6 +53,7 @@ from starlette.responses import JSONResponse, StreamingResponse
 import config
 import db
 import ext_version_cache
+import portal_auth
 import preferences_db
 import redis_client
 import resume_db
@@ -518,9 +519,13 @@ async def sse_chat(request: Request):
 
     Response: text/event-stream
     """
-    # X-User-ID 由 Go gateway 注入，优先级高于 query param
-    user_id = (request.headers.get("x-user-id", "")
-               or request.query_params.get("user_id", "")).strip()
+    # 身份解析:带合法 Bearer 用 JWT sub;AGENT_AUTH_REQUIRED=true 时强制鉴权。
+    # x-user-id / ?user_id= 仅作内网回退,不再单独可信(见 portal_auth.resolve_user_id)。
+    _fallback_uid = (request.headers.get("x-user-id", "")
+                     or request.query_params.get("user_id", "")).strip()
+    user_id, _auth_err = await portal_auth.resolve_user_id(request, _fallback_uid)
+    if _auth_err is not None:
+        return _auth_err
     request_id = request.headers.get("x-request-id", "").strip()
     user_tier  = request.headers.get("x-user-tier", "").strip()
     # X-Language from client (browser navigator.language); Accept-Language as fallback
@@ -719,7 +724,11 @@ async def sse_abort(request: Request):
     """POST /agent/sse/{user_id}/abort?role=&platform= — 中止当前轮次。
     若 role/platform 缺省 → 中止该用户所有活跃 session。
     """
-    user_id, role, platform = _abort_or_delete_key(request)
+    _path_uid, role, platform = _abort_or_delete_key(request)
+    # 身份解析:JWT sub 优先;AGENT_AUTH_REQUIRED 下只能操作自己的 session。
+    user_id, _auth_err = await portal_auth.resolve_user_id(request, _path_uid)
+    if _auth_err is not None:
+        return _auth_err
     if role and platform:
         sess = sse_manager.get(user_id, role, platform)
         if sess is None:
@@ -743,7 +752,11 @@ async def sse_delete(request: Request):
     """DELETE /agent/sse/{user_id}?role=&platform= — 释放该用户的会话内存态(history 仍在 DB)。
     若 role/platform 缺省 → 释放该用户所有 session。
     """
-    user_id, role, platform = _abort_or_delete_key(request)
+    _path_uid, role, platform = _abort_or_delete_key(request)
+    # 身份解析:JWT sub 优先;AGENT_AUTH_REQUIRED 下只能操作自己的 session。
+    user_id, _auth_err = await portal_auth.resolve_user_id(request, _path_uid)
+    if _auth_err is not None:
+        return _auth_err
     if role and platform:
         sess = sse_manager.get(user_id, role, platform)
         if sess is None:
@@ -782,9 +795,12 @@ async def sse_init_session(request: Request):
     Response：
       { user_id, db_session_id, history_length }
     """
-    # X-User-ID 由 Go gateway 注入，优先级高于 query param
-    user_id = (request.headers.get("x-user-id", "")
-               or request.query_params.get("user_id", "")).strip()
+    # 身份解析:带合法 Bearer 用 JWT sub;AGENT_AUTH_REQUIRED=true 时强制鉴权。
+    _fallback_uid = (request.headers.get("x-user-id", "")
+                     or request.query_params.get("user_id", "")).strip()
+    user_id, _auth_err = await portal_auth.resolve_user_id(request, _fallback_uid)
+    if _auth_err is not None:
+        return _auth_err
     request_id = request.headers.get("x-request-id", "").strip()
     user_tier  = request.headers.get("x-user-tier", "").strip()
     if not user_id:

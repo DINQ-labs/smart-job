@@ -98,6 +98,53 @@
 .header-lang:hover { background: var(--dark-line-3); border-color: var(--slate-500); }
 .header-lang:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
+/* 设置钮(⚙️):打开扩展设置页,配置 portal / api-gw / agent-gw 网关地址 */
+.header-settings {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: var(--dark-line-2);
+  border: 1px solid var(--dark-line-3);
+  border-radius: var(--rd-full);
+  font-size: var(--text-tiny);
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.header-settings:hover { background: var(--dark-line-3); border-color: var(--slate-500); }
+.header-settings:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ── 连接异常横幅:被网关踢出 / 扩展版本过旧时,顶栏下方常驻提示 ───── */
+.kick-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2\.5);
+  background: #7f1d1d;
+  border-bottom: 1px solid #b91c1c;
+  color: #fee2e2;
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+.kick-banner[hidden] { display: none; }
+.kick-banner-ico { flex: 0 0 auto; font-size: var(--text-md); }
+.kick-banner-text { flex: 1 1 auto; word-break: break-word; }
+.kick-banner-close {
+  flex: 0 0 auto;
+  padding: 0 var(--sp-1);
+  background: transparent;
+  border: 0;
+  color: #fecaca;
+  font-size: var(--text-md);
+  cursor: pointer;
+  line-height: 1;
+}
+.kick-banner-close:hover { color: var(--white); }
+
 /* ── 2. ContextBar 上下文感知条(置顶,不滚动)─────────────── */
 .ctx-bar {
   padding: var(--sp-2) var(--sp-3);
@@ -899,6 +946,21 @@
 }
 .ob-home:hover .ob-brand { color: var(--slate-300); }
 .ob-home:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* hood 右侧「⚙️ 设置」—— 引导流程内(含登录前)也能改网关地址 */
+.ob-hood .ob-settings {
+  margin-left: auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  padding: 0;
+  background: var(--slate-800);
+  border: 0;
+  border-radius: var(--rd-sm);
+  font-size: var(--text-sm);
+  line-height: 1;
+  cursor: pointer;
+}
+.ob-hood .ob-settings:hover { background: var(--slate-700); }
+.ob-hood .ob-settings:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* 进度条 + 返回(白底区顶部一行)*/
 .ob-progress-bar {

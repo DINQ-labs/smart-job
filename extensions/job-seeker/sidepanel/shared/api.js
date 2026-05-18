@@ -55,8 +55,10 @@
 
   async function getUserId() {
     try {
-      const r = await chrome.storage.local.get(['userId']);
-      return r.userId || '';
+      // 登录身份单一真相 = storage.local.auth.user.id(与 lib/autofill/autofill-bg.js
+      // 口径统一);顶层 userId 仅作兜底 —— 避免 SSE/MCP 侧与 autofill 拿到不一致的 id。
+      const r = await chrome.storage.local.get(['userId', 'auth']);
+      return (r.auth && r.auth.user && r.auth.user.id) || r.userId || '';
     } catch { return ''; }
   }
 
