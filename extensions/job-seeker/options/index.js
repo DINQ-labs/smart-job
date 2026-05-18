@@ -129,7 +129,12 @@
     let gatewayHost = '127.0.0.1';
     try { gatewayHost = new URL(apiGwUrl).hostname || '127.0.0.1'; } catch (_) {}
     await chrome.storage.local.set({ portalApiUrl, apiGwUrl, agentGwUrl, gatewayHost });
-    if (backendChanged) await window.DQ?.authApi?.clearAuth?.();
+    if (backendChanged) {
+      await window.DQ?.authApi?.clearAuth?.();
+      // 通知后台 Service Worker 重读网关地址并重连 WS —— 否则后台仍连旧网关。
+      try { await chrome.runtime.sendMessage({ type: 'reconnectWithNewUrl' }); } catch (_) {}
+      setTimeout(renderConnStatus, 1200);
+    }
     els.portalApi.value = portalApiUrl;
     els.apiGw.value = apiGwUrl;
     els.agentGw.value = agentGwUrl;
@@ -284,7 +289,11 @@
   });
   els.saveBtn.addEventListener('click', save);
   els.pingBtn.addEventListener('click', pingAll);
-  els.connRefreshBtn?.addEventListener('click', renderConnStatus);
+  els.connRefreshBtn?.addEventListener('click', async () => {
+    // 主动催后台连一次(已连则 connect() 直接返回),再刷新状态显示
+    try { await chrome.runtime.sendMessage({ type: 'connect' }); } catch (_) {}
+    setTimeout(renderConnStatus, 600);
+  });
 
   // 后台 WS 连接状态变化（notifyPopup 广播 connectionState）时实时刷新
   chrome.runtime.onMessage.addListener((msg) => {

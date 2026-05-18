@@ -394,6 +394,9 @@ function getReconnectDelay() {
 async function connect() {
   if (ws && ws.readyState === WebSocket.OPEN) return;
   try {
+    // 每次(重)连都重读网关地址:用户在设置页切换后端(apiGwUrl)后,WS 必须随之
+    // 切到新网关 —— 否则后台会一直连旧地址。initGatewayUrl 只读 storage,开销可忽略。
+    await initGatewayUrl();
     // 拉一次最新 EXT_KIND(SW cold start 后第一次连接前必走,确保 onboarding 写
     // 进的 user.role 能反映到 WS 握手参数;后续 onChanged 会同步增量)
     await _loadExtKind();
