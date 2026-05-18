@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "smartjob": {
+      "type": "http",
+      "url": "http://127.0.0.1:8767/mcp",
+      "headers": {
+        "x-user-id": "smartjob",
+        "x-user-role": "jobseeker"
+      }
+    }
+  }
+}
