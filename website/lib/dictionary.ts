@@ -143,7 +143,7 @@ const zh: Dictionary = {
         tagline: "在你自己的浏览器里、用真实登录态干活 —— 不伪造请求、不靠脆弱页面脚本、平台改接口也不用重发版。",
         points: [
           { name: "真实登录态执行", desc: "—— 全系统唯一接触招聘平台的组件,所有请求都用用户自己的 Cookie 和真实指纹发出,后端从不在服务器侧伪造平台流量。" },
-          { name: "四层降级阶梯", desc: "—— 能用 API 就用 API,没 API 退到 DOM 操作,再读不懂才上图像识别;可靠性优先、成本递增。" },
+          { name: "四层降级阶梯", desc: "—— ①抓包捕获真实 API → ②固化成可复用命令 → ③没 API 才退到 DOM 操作 → ④DOM 读不懂才上图像识别;可靠性优先、成本递增。" },
           { name: "抓包逆向", desc: "—— 基于 Chrome DevTools Protocol 旁路捕获平台真实 API 流量,不注入脚本、对页面透明,把接口沉淀成可复用命令。" },
           { name: "令牌链", desc: "—— 平台 API 的有时效安全令牌用有向依赖图建模,缺失或过期自动回补,无需人工关心调用顺序。" },
           { name: "隐藏 Worker Tab", desc: "—— 每平台一个后台工作标签页,真实 fetch + 按操作类型数秒级随机抖动限速,模拟人类节奏。" },
@@ -342,7 +342,7 @@ const en: Dictionary = {
         tagline: "Real work inside your own browser — no forged requests, no brittle page scripts, no re-release when a platform changes its API.",
         points: [
           { name: "Real logged-in execution", desc: "— the only component that touches job platforms; every request goes out with the user's own cookies and real fingerprint, never forged server-side." },
-          { name: "Four-tier fallback ladder", desc: "— use the API when there is one, fall back to DOM operations, resort to vision only when the DOM is unreadable; reliability first." },
+          { name: "Four-tier fallback ladder", desc: "— ① capture the real API → ② freeze it into a reusable command → ③ fall back to DOM when there is no API → ④ resort to vision when the DOM is unreadable; reliability first." },
           { name: "Transparent capture", desc: "— passively captures real platform API traffic via the Chrome DevTools Protocol, injecting no script and changing nothing on the page." },
           { name: "Token chain", desc: "— the time-limited security tokens platform APIs require are modeled as a directed dependency graph; missing or expired tokens are backfilled automatically." },
           { name: "Hidden Worker Tab", desc: "— a background tab per platform issues real fetch calls with randomized-jitter rate limiting by operation type, mimicking human rhythm." },

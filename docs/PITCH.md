@@ -18,7 +18,7 @@ The agent understands your intent → the scheduling layer turns it into a contr
 **定位:不伪造请求、不靠脆弱页面脚本、平台改接口也不用重发版。**
 
 - **真实登录态执行** —— 全系统唯一接触招聘平台的组件。所有请求都在用户自己的浏览器、用自己的 Cookie 和真实指纹发出,与手动操作无异;后端从不在服务器侧伪造平台流量。
-- **四层降级阶梯** —— 能用 API 就用 API(抓包 → 固化成命令),没 API 退到 DOM 操作,DOM 也读不懂才上图像识别。可靠性优先、成本递增,绝大多数动作走最快最稳的 API 路径。
+- **四层降级阶梯** —— ① 抓包捕获平台真实 API → ② 把 API 固化成可复用命令(之后零成本复用)→ ③ 没有对应 API 才退到 DOM 操作 → ④ DOM 也读不懂才上图像识别。可靠性优先、成本递增,绝大多数动作走最快最稳的 API 路径(①②)。
 - **抓包逆向,对页面透明** —— 基于 Chrome DevTools Protocol 旁路捕获平台真实 API 流量,不注入脚本、不改页面行为,把摸清的接口沉淀成可复用命令。
 - **令牌链** —— 平台 API 那串"列表→详情→会话→发消息"的有时效安全令牌,用有向依赖图建模:缺失/过期自动回补,无需人工关心调用顺序。
 - **隐藏 Worker Tab + 拟人节奏** —— 每个平台一个后台工作标签页,真实 `fetch` + 按操作类型数秒级随机抖动限速,模拟人类节奏,降低风控触发。
@@ -61,7 +61,7 @@ The agent understands your intent → the scheduling layer turns it into a contr
 **No forged requests, no brittle page scripts, no re-release when a platform changes its API.**
 
 - **Real logged-in execution** — the only component that touches job platforms. Every request goes out from the user's own browser, with their own cookies and real fingerprint — indistinguishable from manual use. The backend never forges platform traffic server-side.
-- **Four-tier fallback ladder** — use the API when there is one (capture → freeze into a command); fall back to DOM operations when there isn't; resort to vision only when the DOM is unreadable. Reliability first — the vast majority of actions take the fast, stable API path.
+- **Four-tier fallback ladder** — ① capture real platform API traffic → ② freeze the API into a reusable command (zero-cost to reuse thereafter) → ③ fall back to DOM operations only when there is no API → ④ resort to vision only when the DOM is unreadable. Reliability first — the vast majority of actions take the fast, stable API path (① ②).
 - **Transparent capture** — uses the Chrome DevTools Protocol to passively capture real platform API traffic; injects no script, changes nothing on the page, and distills the discovered APIs into reusable commands.
 - **Token chain** — the chain of time-limited security tokens platform APIs require (list → detail → session → message) is modeled as a directed dependency graph; missing or expired tokens are backfilled automatically.
 - **Hidden Worker Tab + human-like pacing** — a background Worker Tab per platform issues real `fetch` calls with randomized-jitter rate limiting by operation type, mimicking human rhythm to reduce anti-abuse triggers.
