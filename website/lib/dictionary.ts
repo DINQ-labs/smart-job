@@ -39,6 +39,11 @@ export interface Dictionary {
   };
   highlights: { value: string; label: string }[];
   features: { title: string; subtitle: string; items: Feature[] };
+  pitch: {
+    title: string;
+    subtitle: string;
+    pillars: { icon: string; name: string; tagline: string; points: { name: string; desc: string }[] }[];
+  };
   showcase: { title: string; subtitle: string; shots: { img: string; title: string; desc: string }[] };
   adminPreview: { title: string; subtitle: string; shots: { img: string; title: string }[]; cta: string };
   architecture: {
@@ -124,6 +129,58 @@ const zh: Dictionary = {
         title: "管理后台",
         desc:
           "Vue3 运维后台：实时监控会话与 Agent、下发命令配置、管理用户与长任务、观测 MCP 调用指标。",
+      },
+    ],
+  },
+  pitch: {
+    title: "三大核心能力",
+    subtitle:
+      "Agent 懂你要什么 → 调度层把任务变成可控流水线 → 扩展在你自己的浏览器里真实落地。",
+    pillars: [
+      {
+        icon: "🧩",
+        name: "浏览器扩展",
+        tagline: "在你自己的浏览器里、用真实登录态干活 —— 不伪造请求、不靠脆弱页面脚本、平台改接口也不用重发版。",
+        points: [
+          { name: "真实登录态执行", desc: "—— 全系统唯一接触招聘平台的组件,所有请求都用用户自己的 Cookie 和真实指纹发出,后端从不在服务器侧伪造平台流量。" },
+          { name: "四层降级阶梯", desc: "—— 能用 API 就用 API,没 API 退到 DOM 操作,再读不懂才上图像识别;可靠性优先、成本递增。" },
+          { name: "抓包逆向", desc: "—— 基于 Chrome DevTools Protocol 旁路捕获平台真实 API 流量,不注入脚本、对页面透明,把接口沉淀成可复用命令。" },
+          { name: "令牌链", desc: "—— 平台 API 的有时效安全令牌用有向依赖图建模,缺失或过期自动回补,无需人工关心调用顺序。" },
+          { name: "隐藏 Worker Tab", desc: "—— 每平台一个后台工作标签页,真实 fetch + 按操作类型数秒级随机抖动限速,模拟人类节奏。" },
+          { name: "动态命令热更", desc: "—— 平台改接口时,后端以安全 JSON 模板经 WebSocket 推下即时生效,不重发扩展、杜绝代码注入。" },
+          { name: "自动填表", desc: "—— 把简历智能填进 Workday / Greenhouse / Lever 等任意 ATS 表单,跨 iframe 探测字段、上报前自动脱敏 PII。" },
+          { name: "求职 / 招聘双模", desc: "—— 同一套代码、同一个扩展,既服务求职者也服务招聘者。" },
+        ],
+      },
+      {
+        icon: "⚙️",
+        name: "调度",
+        tagline: "把不可靠的平台操作变成可控、可观测、可扩容的流水线 —— 资源池化 + 分布式编排 + 拟人限速 + 全链路审计。",
+        points: [
+          { name: "浏览器槽位池", desc: "—— 带状态机的槽位管理,按平台限容、FIFO 排队、超时回收;槽位释放时强制登出清态,多用户零串扰。" },
+          { name: "会话隧道", desc: "—— 扩展经单条 WebSocket 接入,按(用户, 角色)管理会话、踢掉重复登录,请求响应用 req_id 精确配对。" },
+          { name: "三模式代理池", desc: "—— 轮询 / 随机 / 粘性(同浏览器复用同代理)三种分配策略可选。" },
+          { name: "限速 · 配额 · 守卫", desc: "—— 每会话按操作类型 1~8 秒随机抖动限速,每日配额硬约束,敏感操作前置守卫拦截。" },
+          { name: "任务编排引擎", desc: "—— 长任务拆成模板 → 平台专属步骤流水线 → 逐条目执行,支持批量打招呼与简历筛选,进度经 SSE 实时回报。" },
+          { name: "分布式协调", desc: "—— Redis 撑起跨实例并发计数、任务租约、取消恢复信号;Redis 不可用自动降级单实例,服务不中断。" },
+          { name: "风控信号驱动", desc: "—— 平台摩擦统一抽象成信号,按策略自动处理:自动重试 / 暂停转人工 / 跳过当前条目 / 终止任务。" },
+          { name: "全链路审计", desc: "—— 每条命令、每次槽位分配、每个任务进度都落库,管理后台实时 WebSocket 看板可观测。" },
+        ],
+      },
+      {
+        icon: "🤖",
+        name: "Agent",
+        tagline: "一句话下达意图,它自己选模式、调工具、跑批量 —— 对话式驱动 + 模式感知 + 流式体验 + 工具化执行。",
+        points: [
+          { name: "对话式自动化", desc: "—— 用自然语言说需求,Agent 自动调工具完成搜索、评估、沟通、投递。" },
+          { name: "推理主循环 + 流式输出", desc: "—— 推理 → 调工具 → 取结果 → 再推理多轮循环,全程以 SSE 推流:文本、思考、工具调用、职位卡片实时可见。" },
+          { name: "六大模式系统", desc: "—— 搜索 / 评估 / 投递 / 面试准备 / 对比 / 招聘,按关键词自动判定意图,模式可中途升级。" },
+          { name: "约 210 个 MCP 工具", desc: "—— 覆盖三大平台求职端与招聘端,经 FastMCP 标准协议暴露,任意 MCP 客户端可直连。" },
+          { name: "扩展思考", desc: "—— 开启 extended thinking,复杂决策的推理过程可流式展开查看。" },
+          { name: "模型自动降级", desc: "—— 主模型过载时自动切到备用模型,对话不中断。" },
+          { name: "简历与个性化完全本地", desc: "—— 简历 PDF/DOCX 在服务内解析、缓存、版本化,不调任何外部服务。" },
+          { name: "跨 worker 会话", desc: "—— 会话历史经 Redis 跨实例共享、空闲自动回收,水平扩容无缝。" },
+        ],
       },
     ],
   },
@@ -271,6 +328,58 @@ const en: Dictionary = {
         title: "Admin console",
         desc:
           "A Vue 3 operations console: monitor sessions and agents live, push command configs, manage users and long-running tasks, and observe MCP call metrics.",
+      },
+    ],
+  },
+  pitch: {
+    title: "Three core capabilities",
+    subtitle:
+      "The agent understands your intent → the scheduling layer turns it into a controllable pipeline → the extension executes it for real, inside your own browser.",
+    pillars: [
+      {
+        icon: "🧩",
+        name: "Browser extension",
+        tagline: "Real work inside your own browser — no forged requests, no brittle page scripts, no re-release when a platform changes its API.",
+        points: [
+          { name: "Real logged-in execution", desc: "— the only component that touches job platforms; every request goes out with the user's own cookies and real fingerprint, never forged server-side." },
+          { name: "Four-tier fallback ladder", desc: "— use the API when there is one, fall back to DOM operations, resort to vision only when the DOM is unreadable; reliability first." },
+          { name: "Transparent capture", desc: "— passively captures real platform API traffic via the Chrome DevTools Protocol, injecting no script and changing nothing on the page." },
+          { name: "Token chain", desc: "— the time-limited security tokens platform APIs require are modeled as a directed dependency graph; missing or expired tokens are backfilled automatically." },
+          { name: "Hidden Worker Tab", desc: "— a background tab per platform issues real fetch calls with randomized-jitter rate limiting by operation type, mimicking human rhythm." },
+          { name: "Hot-updatable commands", desc: "— when a platform changes its API, the backend pushes new commands as safe JSON templates over WebSocket, live — no extension re-release." },
+          { name: "Form auto-fill", desc: "— fills resume data into any ATS form (Workday, Greenhouse, Lever, …), detecting fields across iframes and scrubbing PII before upload." },
+          { name: "Dual seeker / recruiter mode", desc: "— one codebase, one extension, serving both job seekers and recruiters." },
+        ],
+      },
+      {
+        icon: "⚙️",
+        name: "Scheduling",
+        tagline: "Turns unreliable platform actions into a controllable, observable, scalable pipeline — resource pooling + distributed orchestration + human-like pacing + a full audit trail.",
+        points: [
+          { name: "Browser slot pool", desc: "— slots managed by a state machine, with per-platform capacity, FIFO queuing and idle eviction; on release a slot is force-logged-out — zero data bleed." },
+          { name: "Session tunnel", desc: "— extensions connect over a single WebSocket; sessions keyed by (user, role), duplicate logins kicked, requests correlated by req_id." },
+          { name: "Three-mode proxy pool", desc: "— round-robin / random / sticky (same proxy reused per browser) allocation strategies." },
+          { name: "Rate limit · quota · guard", desc: "— per-session jitter rate limiting (1–8 s) by operation type, hard daily quotas, and a guard intercepting sensitive operations up front." },
+          { name: "Task orchestration engine", desc: "— long tasks become template → platform-specific step pipeline → per-item execution, with progress streamed live over SSE." },
+          { name: "Distributed coordination", desc: "— Redis powers cross-instance turn counting, task leases and cancel/resume signals; without Redis it degrades to single-instance." },
+          { name: "Risk-signal driven", desc: "— platform friction is unified into signals handled by strategy: auto-retry / pause-for-human / skip-item / abort." },
+          { name: "End-to-end audit", desc: "— every command, slot assignment and task step is persisted and observable on a live admin dashboard." },
+        ],
+      },
+      {
+        icon: "🤖",
+        name: "Agent",
+        tagline: "State your intent in one sentence; it picks the mode, calls the tools, runs the batch — conversation-driven + mode-aware + streamed + tool-executed.",
+        points: [
+          { name: "Conversational automation", desc: "— state your need in natural language; the agent calls tools to search, evaluate, message and apply." },
+          { name: "Reasoning loop + streaming", desc: "— a multi-turn reason → call tool → take result → reason loop, streamed end-to-end over SSE: text, thinking, tool calls and job cards in real time." },
+          { name: "Six-mode system", desc: "— search / evaluate / apply / interview / compare / recruiter; intent is auto-detected from keywords and the mode can upgrade mid-conversation." },
+          { name: "~210 MCP tools", desc: "— covering the seeker and recruiter sides of all three platforms, exposed over the standard FastMCP protocol for any MCP client." },
+          { name: "Extended thinking", desc: "— with extended thinking on, the reasoning behind complex decisions can be streamed and expanded." },
+          { name: "Automatic model fallback", desc: "— if the primary model is overloaded, it switches to a backup model without breaking the conversation." },
+          { name: "Fully local resume", desc: "— resume PDFs/DOCX are parsed, cached and versioned inside the service, calling no external service." },
+          { name: "Cross-worker sessions", desc: "— session history is shared across instances via Redis and idle-swept; horizontal scaling is seamless." },
+        ],
       },
     ],
   },
