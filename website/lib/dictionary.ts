@@ -49,7 +49,13 @@ export interface Dictionary {
     subtitle: string;
     milestones: { badge: string; status: string; title: string; desc: string }[];
     why: { title: string; body: string };
-    cta: { title: string; intro: string; roles: { role: string; desc: string }[]; button: string };
+    cta: {
+      title: string;
+      intro: string;
+      roles: { role: string; desc: string }[];
+      button: string;
+      wechat: { label: string; hint: string };
+    };
   };
   showcase: { title: string; subtitle: string; shots: { img: string; title: string; desc: string }[] };
   adminPreview: { title: string; subtitle: string; shots: { img: string; title: string }[]; cta: string };
@@ -232,6 +238,10 @@ const zh: Dictionary = {
         { role: "作为贡献者", desc: "改代码、补文档、接新平台、做翻译 —— 一个 PR 聚焦一件事。" },
       ],
       button: "在 GitHub 上参与",
+      wechat: {
+        label: "扫码加入微信交流群",
+        hint: "微信群二维码有有效期 —— 若已失效扫不进,到 GitHub 提个 issue,我们会拉你进群。",
+      },
     },
   },
   showcase: {
@@ -474,6 +484,10 @@ const en: Dictionary = {
         { role: "As a contributor", desc: "Improve code, fill in docs, add a platform, translate — one PR, one focused thing." },
       ],
       button: "Join in on GitHub",
+      wechat: {
+        label: "Scan to join our WeChat group",
+        hint: "WeChat group QR codes expire — if this one no longer works, open a GitHub issue and we'll add you.",
+      },
     },
   },
   showcase: {

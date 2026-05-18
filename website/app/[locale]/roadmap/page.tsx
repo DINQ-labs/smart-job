@@ -104,6 +104,21 @@ export default function RoadmapPage({ params }: { params: { locale: string } }) 
             {t.cta.button}
             <ArrowIcon className="h-4 w-4 transition group-hover:translate-x-0.5" />
           </a>
+
+          <div className="mt-6 glass-card flex flex-col items-center gap-6 rounded-2xl p-6 sm:flex-row">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/wechat-group.jpg"
+              alt={t.cta.wechat.label}
+              width={1031}
+              height={1440}
+              className="w-56 max-w-full shrink-0 rounded-xl"
+            />
+            <div className="text-center sm:text-left">
+              <h3 className="text-base font-semibold text-white">{t.cta.wechat.label}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">{t.cta.wechat.hint}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
