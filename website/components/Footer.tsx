@@ -8,7 +8,8 @@ export default function Footer({ locale }: { locale: Locale }) {
   const t = getDictionary(locale);
 
   return (
-    <footer className="border-t border-white/10 bg-ink-900">
+    <footer className="relative bg-ink-900">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
       <div className="mx-auto max-w-6xl px-5 py-12">
         <div className="flex flex-col gap-8 md:flex-row md:justify-between">
           <div className="max-w-sm">

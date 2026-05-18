@@ -7,9 +7,13 @@ export default function DocsCta({ locale }: { locale: Locale }) {
   const t = getDictionary(locale).docsCta;
 
   return (
-    <section className="bg-ink-900">
-      <div className="mx-auto max-w-6xl px-5 py-20 md:py-24">
+    <section className="relative overflow-hidden bg-ink-900">
+      <div className="pointer-events-none absolute inset-x-0 top-0">
+        <div className="aurora-blob mx-auto h-64 w-[40rem] max-w-full rounded-full bg-accent/12 blur-[120px]" />
+      </div>
+      <div className="relative mx-auto max-w-6xl px-5 py-24">
         <div className="max-w-2xl">
+          <div className="mb-5 h-1 w-12 rounded-full bg-gradient-to-r from-accent to-cyan-400" />
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h2>
           <p className="mt-3 text-slate-400">{t.subtitle}</p>
         </div>
@@ -19,7 +23,7 @@ export default function DocsCta({ locale }: { locale: Locale }) {
             <Link
               key={card.slug}
               href={`/${locale}/docs/${card.slug}`}
-              className="group flex flex-col rounded-2xl border border-white/10 bg-ink-800 p-6 transition hover:border-accent/40 hover:bg-ink-700"
+              className="glass-card glow-hover group flex flex-col rounded-2xl p-6"
             >
               <h3 className="text-lg font-semibold">{card.title}</h3>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-400">{card.desc}</p>

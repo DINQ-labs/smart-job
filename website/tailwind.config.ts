@@ -24,6 +24,9 @@ const config: Config = {
         sans: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
       },
+      boxShadow: {
+        glow: "0 10px 40px -10px rgba(99, 102, 241, 0.55)",
+      },
     },
   },
   plugins: [],

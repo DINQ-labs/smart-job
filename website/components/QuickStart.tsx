@@ -8,8 +8,9 @@ export default function QuickStart({ locale }: { locale: Locale }) {
 
   return (
     <section id="quickstart" className="scroll-mt border-b border-white/10">
-      <div className="mx-auto max-w-6xl px-5 py-20 md:py-24">
+      <div className="mx-auto max-w-6xl px-5 py-24">
         <div className="max-w-2xl">
+          <div className="mb-5 h-1 w-12 rounded-full bg-gradient-to-r from-accent to-violet-500" />
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">{t.title}</h2>
           <p className="mt-3 text-slate-400">{t.subtitle}</p>
         </div>
@@ -18,10 +19,10 @@ export default function QuickStart({ locale }: { locale: Locale }) {
           {t.steps.map((step, i) => (
             <li
               key={i}
-              className="rounded-2xl border border-white/10 bg-ink-800 p-5 md:flex md:items-center md:gap-6"
+              className="glass-card rounded-2xl p-5 md:flex md:items-center md:gap-6"
             >
               <div className="flex items-start gap-4 md:w-2/5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 font-mono text-sm font-semibold text-accent-soft">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-violet-500 font-mono text-sm font-semibold text-white">
                   {i + 1}
                 </span>
                 <div>
@@ -30,7 +31,7 @@ export default function QuickStart({ locale }: { locale: Locale }) {
                 </div>
               </div>
               {step.code && (
-                <pre className="mt-4 flex-1 overflow-x-auto rounded-xl border border-white/10 bg-ink-900 p-4 font-mono text-xs leading-relaxed text-slate-300 md:mt-0">
+                <pre className="mt-4 flex-1 overflow-x-auto rounded-xl border border-white/10 bg-black/40 p-4 font-mono text-xs leading-relaxed text-slate-300 md:mt-0">
                   {step.code}
                 </pre>
               )}

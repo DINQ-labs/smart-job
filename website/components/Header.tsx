@@ -15,7 +15,7 @@ export default function Header({ locale }: { locale: Locale }) {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-ink-900/80 backdrop-blur">
+    <header className="sticky top-0 z-50 bg-ink-900/70 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
         <Link href={`/${locale}`} className="flex items-center gap-2.5">
           <Logo className="h-8 w-8" />
@@ -40,13 +40,14 @@ export default function Header({ locale }: { locale: Locale }) {
             href={GITHUB_URL}
             target="_blank"
             rel="noreferrer"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-accent/40 hover:text-white"
             aria-label="GitHub"
           >
             <GithubIcon className="h-5 w-5" />
           </a>
         </div>
       </div>
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
     </header>
   );
 }
