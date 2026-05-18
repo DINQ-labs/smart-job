@@ -86,7 +86,46 @@
 - 打开管理后台(`http://localhost:8081`)的 **仪表盘 / 浏览器池**,应能看到该扩展
   会话;api-gateway 的 `GET /status` 返回里 `extensions_connected` 会 +1。
 
-## 8. 常见问题
+## 8. 在 Claude Code 中使用(MCP)
+
+除侧边栏的 AI 助手外,还可以让 [Claude Code](https://claude.com/claude-code) 直接驱动扩展
+—— api-gateway 本身是一个 MCP server,Claude Code 连上后即可调用 `boss_* / linkedin_* /
+indeed_*` 等平台自动化工具。链路:`Claude Code → api-gateway → 扩展 → 浏览器`。
+
+仓库根目录已带项目级 MCP 配置 `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "smartjob": {
+      "type": "http",
+      "url": "http://127.0.0.1:8767/mcp",
+      "headers": { "x-user-id": "smartjob", "x-user-role": "jobseeker" }
+    }
+  }
+}
+```
+
+使用步骤:
+
+1. 后端已启动,且扩展已按上文连上 api-gateway。
+2. 扩展登录默认账号 **`demo@smartjob.top`** —— 它的用户 id 是固定常量 `smartjob`,必须与
+   `.mcp.json` 里的 `x-user-id` 一致,Claude Code 调的工具才能路由到你这个扩展。
+3. 在仓库目录里打开 Claude Code,首次会提示是否信任本项目的 MCP server,确认即可。
+4. `claude mcp list` 应显示 `smartjob ✓ Connected`。
+5. 直接对 Claude 说「检查一下 Boss 直聘登录状态」之类,它会自动调用对应工具。
+
+> 不在仓库目录、或想让所有项目都能用,可改用用户级配置(与 `.mcp.json` 二选一,不要
+> 同时配,否则会出现两个重复的 MCP server):
+>
+> ```bash
+> claude mcp add --transport http smartjob http://127.0.0.1:8767/mcp \
+>   --header "x-user-id: smartjob" --header "x-user-role: jobseeker"
+> ```
+
+后端部署到公网时,把 `.mcp.json` 里的 URL 换成对应的 api-gateway 公网地址即可。
+
+## 9. 常见问题
 
 | 现象 | 排查 |
 |---|---|

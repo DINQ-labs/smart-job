@@ -44,6 +44,16 @@ const FLOW_EN = `User  →  Extension side panel
                                      ▼
                        Job platform API (user session)`;
 
+const MCP_JSON = `{
+  "mcpServers": {
+    "smartjob": {
+      "type": "http",
+      "url": "http://127.0.0.1:8767/mcp",
+      "headers": { "x-user-id": "smartjob", "x-user-role": "jobseeker" }
+    }
+  }
+}`;
+
 const zh: Record<DocSlug, DocContent> = {
   architecture: {
     title: "架构总览",
@@ -242,7 +252,7 @@ const zh: Record<DocSlug, DocContent> = {
       { t: "h2", text: "登录与首次引导" },
       {
         t: "p",
-        text: "回到侧边栏首屏的登录 / 注册表单:已有账号直接登录;新账号切到「注册」,填邮箱 + 密码后收邮箱验证码完成注册。本地 Docker 在开发模式下会自动播种一个测试账号(smartjob@joyhouselabs.com / 123456),可直接登录 —— 这是弱口令测试账号,生产环境务必关闭播种。",
+        text: "回到侧边栏首屏的登录 / 注册表单:已有账号直接登录;新账号切到「注册」,填邮箱 + 密码后收邮箱验证码完成注册。本地 Docker 在开发模式下会自动播种一个测试账号(demo@smartjob.top / 123456),可直接登录 —— 这是弱口令测试账号,生产环境务必关闭播种。",
       },
       {
         t: "p",
@@ -261,6 +271,21 @@ const zh: Record<DocSlug, DocContent> = {
           ["侧边栏打不开", "确认浏览器版本支持 sidePanel;点工具栏的扩展图标触发"],
           ["改了扩展代码不生效", "chrome://extensions 里点该扩展的「刷新」按钮"],
           ["平台操作被风控", "扩展与 Agent 会给出提示,按指引到平台站点处理后继续"],
+        ],
+      },
+      { t: "h2", text: "在 Claude Code 中使用(MCP)" },
+      {
+        t: "p",
+        text: "除侧边栏 AI 助手外,还可以让 Claude Code 直接驱动扩展 —— api-gateway 本身是一个 MCP server。仓库根目录已带项目级 MCP 配置 .mcp.json:",
+      },
+      { t: "pre", text: MCP_JSON },
+      {
+        t: "ul",
+        items: [
+          "后端已启动,扩展已连上 api-gateway。",
+          "扩展登录默认账号 demo@smartjob.top —— 其用户 id 为固定常量 smartjob,必须与 .mcp.json 的 x-user-id 一致,工具调用才能路由到你的扩展。",
+          "在仓库目录打开 Claude Code,首次确认信任本项目 MCP server;claude mcp list 应显示 smartjob ✓ Connected。",
+          "对 Claude 说「检查 Boss 直聘登录状态」之类,它会自动调用 boss_* 工具,链路为 Claude Code → api-gateway → 扩展 → 浏览器。",
         ],
       },
     ],
@@ -498,7 +523,7 @@ const en: Record<DocSlug, DocContent> = {
       { t: "h2", text: "Sign in and onboarding" },
       {
         t: "p",
-        text: "Back on the login / register form: existing users sign in directly; new users switch to \"Register\", enter an email and password, and complete an email verification code. In development mode a local Docker deployment auto-seeds a test account (smartjob@joyhouselabs.com / 123456) you can sign in with directly — this is a weak-password test account, and seeding must be disabled in production.",
+        text: "Back on the login / register form: existing users sign in directly; new users switch to \"Register\", enter an email and password, and complete an email verification code. In development mode a local Docker deployment auto-seeds a test account (demo@smartjob.top / 123456) you can sign in with directly — this is a weak-password test account, and seeding must be disabled in production.",
       },
       {
         t: "p",
@@ -517,6 +542,21 @@ const en: Record<DocSlug, DocContent> = {
           ["Side panel won't open", "Make sure the browser supports sidePanel; click the extension toolbar icon"],
           ["Code changes not applied", "Click the extension's Reload button on chrome://extensions"],
           ["Platform action hits anti-abuse checks", "The extension and agent will prompt you; follow the guidance on the platform site"],
+        ],
+      },
+      { t: "h2", text: "Use it from Claude Code (MCP)" },
+      {
+        t: "p",
+        text: "Beyond the side-panel AI assistant, you can let Claude Code drive the extension directly — api-gateway is itself an MCP server. The repo ships a project-scoped MCP config, .mcp.json:",
+      },
+      { t: "pre", text: MCP_JSON },
+      {
+        t: "ul",
+        items: [
+          "Have the backend running and the extension connected to api-gateway.",
+          "Sign the extension in as the default account demo@smartjob.top — its user id is the fixed constant smartjob, which must match x-user-id in .mcp.json so tool calls route to your extension.",
+          "Open Claude Code in the repo directory and approve the project's MCP server on first run; claude mcp list should show smartjob ✓ Connected.",
+          "Tell Claude something like 'check my BOSS Zhipin login status' — it calls the boss_* tools, with the chain Claude Code → api-gateway → extension → browser.",
         ],
       },
     ],

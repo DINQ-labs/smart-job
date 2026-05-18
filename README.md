@@ -90,6 +90,13 @@ pnpm dev                      # 开发服务器，默认 http://localhost:5174
 3. 在扩展的「设置」页填三个后端地址 —— 本地开发点「开发环境」预设即可一键填入
    `127.0.0.1` 的三个端口。
 
+## 在 Claude Code 中使用(MCP)
+
+api-gateway 本身是一个 MCP server —— [Claude Code](https://claude.com/claude-code) 连上后即可
+调用平台自动化工具(`boss_* / linkedin_* / indeed_*`)。仓库根目录已带 `.mcp.json`:起本地栈、
+扩展登录默认账号 `demo@smartjob.top` 后,在仓库目录打开 Claude Code 并确认信任本项目 MCP
+即可。详细步骤见 [docs/EXTENSION-SETUP.md](docs/EXTENSION-SETUP.md) 第 8 节。
+
 ## 文档
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — 架构总览与端到端数据流
