@@ -11,6 +11,7 @@ export default function Header({ locale }: { locale: Locale }) {
     { href: `/${locale}#showcase`, label: t.nav.showcase },
     { href: `/${locale}#architecture`, label: t.nav.architecture },
     { href: `/${locale}#quickstart`, label: t.nav.quickstart },
+    { href: `/${locale}/roadmap`, label: t.nav.roadmap },
     { href: `/${locale}/docs/architecture`, label: t.nav.docs },
   ];
 

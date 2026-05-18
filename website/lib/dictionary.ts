@@ -27,7 +27,7 @@ export interface QuickStep {
 }
 
 export interface Dictionary {
-  nav: { features: string; showcase: string; architecture: string; docs: string; quickstart: string };
+  nav: { features: string; showcase: string; architecture: string; docs: string; quickstart: string; roadmap: string };
   hero: {
     badge: string;
     title: string;
@@ -43,6 +43,13 @@ export interface Dictionary {
     title: string;
     subtitle: string;
     pillars: { icon: string; name: string; tagline: string; points: { name: string; desc: string }[] }[];
+  };
+  roadmap: {
+    title: string;
+    subtitle: string;
+    milestones: { badge: string; status: string; title: string; desc: string }[];
+    why: { title: string; body: string };
+    cta: { title: string; intro: string; roles: { role: string; desc: string }[]; button: string };
   };
   showcase: { title: string; subtitle: string; shots: { img: string; title: string; desc: string }[] };
   adminPreview: { title: string; subtitle: string; shots: { img: string; title: string }[]; cta: string };
@@ -67,13 +74,14 @@ export interface Dictionary {
     tagline: string;
     disclaimer: string;
     built: string;
+    project: string;
     funding: { prefix: string; suffix: string };
   };
   docsNav: { overview: string; items: { slug: string; label: string }[]; onThisPage: string; backHome: string };
 }
 
 const zh: Dictionary = {
-  nav: { features: "功能特性", showcase: "界面预览", architecture: "系统架构", docs: "文档", quickstart: "快速开始" },
+  nav: { features: "功能特性", showcase: "界面预览", architecture: "系统架构", docs: "文档", quickstart: "快速开始", roadmap: "路线图" },
   hero: {
     badge: "开源 · 对话式求职招聘自动化",
     title: "让 AI Agent 替你",
@@ -184,6 +192,48 @@ const zh: Dictionary = {
       },
     ],
   },
+  roadmap: {
+    title: "路线图",
+    subtitle:
+      "我们只承诺一件事 —— 2026 Q2,smart-job 开源、开放 Alpha 公测。此后的每一步,都交给社区。",
+    milestones: [
+      {
+        badge: "已完成",
+        status: "shipped",
+        title: "系统已造好",
+        desc:
+          "浏览器扩展、调度、Agent、管理后台四大组件全部就位,BOSS直聘 / LinkedIn / Indeed 三平台、求职与招聘双向场景已打通 —— 约 210 个 MCP 工具,Docker 一键部署。这不是一份 PPT,是一套能跑起来的系统。",
+      },
+      {
+        badge: "2026 Q2 · 当前",
+        status: "now",
+        title: "Alpha 公测 & 开源",
+        desc:
+          "全部代码以 MIT 许可开源,面向公众开放 Alpha 测试。把话说清楚 —— 这是 Alpha:核心链路能完整跑通,边角仍然粗糙。我们提前公开它,正是想让真实使用替我们找出该打磨的地方。",
+      },
+      {
+        badge: "持续",
+        status: "ongoing",
+        title: "之后 —— 交给社区",
+        desc:
+          "Alpha 之后没有预设的功能清单。smart-job 往哪走,由真正用它的人决定:你提的 issue、发起的讨论、合并的 PR,就是它的路标。维护者守住代码质量与方向一致性,把「做什么」留给社区。",
+      },
+    ],
+    why: {
+      title: "为什么没有 Q3、Q4 的功能清单?",
+      body:
+        "因为我们不知道 —— 假装知道,对你没有任何好处。求职自动化真正的痛点,藏在不同平台、不同人的用法里,不在我们的会议室里。与其闭门排期,不如把系统开源,把方向还给使用它的人。一份诚实的路线图,只写已经确定的事。",
+    },
+    cta: {
+      title: "用户,或贡献者 —— 两种身份都在推动它",
+      intro: "你不必会写代码,也能影响它的方向。",
+      roles: [
+        { role: "作为用户", desc: "上手试用,把遇到的 bug、不顺手的地方、想要的能力写成 issue 或讨论。" },
+        { role: "作为贡献者", desc: "改代码、补文档、接新平台、做翻译 —— 一个 PR 聚焦一件事。" },
+      ],
+      button: "在 GitHub 上参与",
+    },
+  },
   showcase: {
     title: "侧边栏实拍",
     subtitle: "扩展侧边栏就是用户的全部操作界面 —— 对话、长任务、抓包工具集于一处。",
@@ -255,6 +305,7 @@ const zh: Dictionary = {
     tagline: "多平台求职 / 招聘自动化系统",
     disclaimer: "本项目用于学习与研究目的。使用者需自行确保遵守目标平台的服务条款及所在地法律法规。",
     built: "基于 Next.js 构建",
+    project: "项目",
     funding: { prefix: "本项目由", suffix: "资助" },
   },
   docsNav: {
@@ -272,7 +323,7 @@ const zh: Dictionary = {
 };
 
 const en: Dictionary = {
-  nav: { features: "Features", showcase: "Preview", architecture: "Architecture", docs: "Docs", quickstart: "Quick Start" },
+  nav: { features: "Features", showcase: "Preview", architecture: "Architecture", docs: "Docs", quickstart: "Quick Start", roadmap: "Roadmap" },
   hero: {
     badge: "Open source · Conversational job automation",
     title: "Let an AI agent",
@@ -383,6 +434,48 @@ const en: Dictionary = {
       },
     ],
   },
+  roadmap: {
+    title: "Roadmap",
+    subtitle:
+      "We commit to exactly one thing — in Q2 2026, smart-job goes open source and opens an Alpha public beta. Every step after that, we leave to the community.",
+    milestones: [
+      {
+        badge: "Shipped",
+        status: "shipped",
+        title: "The system is built",
+        desc:
+          "All four components — browser extension, scheduling, agent, admin console — are in place. BOSS Zhipin / LinkedIn / Indeed, both seeker and recruiter flows, are wired up: ~210 MCP tools, one-command Docker deploy. Not a slide deck — a system that actually runs.",
+      },
+      {
+        badge: "Q2 2026 · Now",
+        status: "now",
+        title: "Alpha public beta & open source",
+        desc:
+          "The entire codebase is open-sourced under the MIT license and opened for public Alpha testing. To be clear — this is an alpha: the core path runs end to end, the edges are still rough. We're opening it early on purpose, so real-world use can show us what to polish.",
+      },
+      {
+        badge: "Ongoing",
+        status: "ongoing",
+        title: "Beyond — handed to the community",
+        desc:
+          "After the alpha there is no preset feature list. Where smart-job goes is decided by the people who actually use it — the issues you file, the discussions you start, the PRs that land are its signposts. Maintainers guard code quality and directional coherence, and leave what to build to the community.",
+      },
+    ],
+    why: {
+      title: "Why no Q3 / Q4 feature list?",
+      body:
+        "Because we don't know — and pretending to wouldn't help you. The real pain points of job automation live in how different people use different platforms, not in our meeting room. Rather than scheduling features behind closed doors, we open-source the system and hand its direction back to the people using it. An honest roadmap lists only what's actually decided.",
+    },
+    cta: {
+      title: "User or contributor — both move it forward",
+      intro: "You don't need to write code to shape where it goes.",
+      roles: [
+        { role: "As a user", desc: "Try it, and turn the bugs, rough edges and capabilities you wish for into issues or discussions." },
+        { role: "As a contributor", desc: "Improve code, fill in docs, add a platform, translate — one PR, one focused thing." },
+      ],
+      button: "Join in on GitHub",
+    },
+  },
   showcase: {
     title: "Inside the side panel",
     subtitle:
@@ -456,6 +549,7 @@ const en: Dictionary = {
     disclaimer:
       "This project is for learning and research purposes. Users are responsible for complying with the target platforms' terms of service and local laws.",
     built: "Built with Next.js",
+    project: "Project",
     funding: { prefix: "Funded by", suffix: "" },
   },
   docsNav: {

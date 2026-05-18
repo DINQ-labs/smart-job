@@ -40,9 +40,17 @@ export default function Footer({ locale }: { locale: Locale }) {
             </div>
             <div>
               <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                GitHub
+                {t.footer.project}
               </div>
               <ul className="mt-3 space-y-2">
+                <li>
+                  <Link
+                    href={`/${locale}/roadmap`}
+                    className="text-sm text-slate-400 transition hover:text-white"
+                  >
+                    {t.nav.roadmap}
+                  </Link>
+                </li>
                 <li>
                   <a
                     href={GITHUB_URL}
