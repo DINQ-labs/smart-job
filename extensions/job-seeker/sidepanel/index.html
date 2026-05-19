@@ -13,25 +13,33 @@
 <div id="app">
   <!-- ── 顶栏 Header ───────────────────────────────────────── -->
   <header class="header">
-    <button class="header-home" id="headerHome" type="button" data-i18n-attr="title:header.homeTitle">
-      <span class="header-bot" aria-hidden="true">🏠</span>
-      <span class="header-title" data-i18n="header.home">首页</span>
-    </button>
-    <span class="header-spacer"></span>
-    <button class="header-settings" id="headerSettings" type="button"
-            data-i18n-attr="title:header.settingsTitle">⚙️</button>
-    <button class="header-lang" id="headerLang" type="button" data-i18n-switch></button>
     <span class="header-mode" id="headerMode" role="button" tabindex="0"
           data-i18n-attr="title:header.modeTitle">
       <span class="header-mode-dot" id="headerModeDot" aria-hidden="true"></span>
       <span id="headerModeLabel">Boss · 求职</span>
       <span class="header-mode-switch" aria-hidden="true">⇆</span>
     </span>
+    <span class="header-spacer"></span>
+    <button class="header-settings" id="headerSettings" type="button"
+            data-i18n-attr="title:header.settingsTitle" aria-label="设置">
+      <svg class="header-settings-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7h5"></path>
+        <path d="M15 7h5"></path>
+        <path d="M4 17h5"></path>
+        <path d="M15 17h5"></path>
+        <path d="M4 12h10"></path>
+        <path d="M18 12h2"></path>
+        <circle cx="12" cy="7" r="2"></circle>
+        <circle cx="12" cy="17" r="2"></circle>
+        <circle cx="16" cy="12" r="2"></circle>
+      </svg>
+    </button>
+    <button class="header-lang" id="headerLang" type="button" data-i18n-switch></button>
   </header>
 
   <!-- ── 连接异常横幅(被网关踢出 / 版本过旧时显示)──────────── -->
   <div class="kick-banner" id="kickBanner" hidden role="alert">
-    <span class="kick-banner-ico" aria-hidden="true">⚠️</span>
+    <span class="kick-banner-ico" aria-hidden="true">!</span>
     <span class="kick-banner-text" id="kickBannerText"></span>
     <button class="kick-banner-close" id="kickBannerClose" type="button"
             data-i18n-attr="title:kick.dismiss" title="关闭">✕</button>
@@ -40,36 +48,36 @@
   <!-- ── 顶部 Tab 栏 ──────────────────────────────────────── -->
   <nav class="pt" id="ptTabs">
     <button class="pt-tab active" data-tab="chat" type="button">
-      <span class="pt-tab-ico" aria-hidden="true">💬</span><span data-i18n="tabs.chat">AI助手</span>
+      <span data-i18n="tabs.chat">AI助手</span>
     </button>
     <button class="pt-tab" data-tab="tasks" type="button">
-      <span class="pt-tab-ico" aria-hidden="true">📋</span><span data-i18n="tabs.tasks">任务</span>
+      <span data-i18n="tabs.tasks">任务</span>
       <span class="pt-tab-badge hidden" id="tabTasksBadge">0</span>
     </button>
     <!-- 收藏 tab 暂时隐藏(保留按钮 / #tab-bookmarks 面板 / bookmarks.js,去掉 hidden 类即恢复)-->
     <button class="pt-tab hidden" data-tab="bookmarks" type="button">
-      <span class="pt-tab-ico" aria-hidden="true">⭐</span><span data-i18n="tabs.bookmarks">收藏</span>
+      <span data-i18n="tabs.bookmarks">收藏</span>
     </button>
     <button class="pt-tab" data-tab="tools" type="button">
-      <span class="pt-tab-ico" aria-hidden="true">🛠️</span><span data-i18n="tabs.tools">工具</span>
+      <span data-i18n="tabs.tools">工具</span>
     </button>
     <button class="pt-tab" data-tab="profile" type="button">
-      <span class="pt-tab-ico" aria-hidden="true">👤</span><span data-i18n="tabs.profile">我的</span>
+      <span data-i18n="tabs.profile">我的</span>
     </button>
   </nav>
 
   <!-- ── 上下文条 ContextBar ──────────────────────────────── -->
   <section class="ctx-bar" id="ctxBar">
     <div class="ctx-row" id="ctxResume" hidden>
-      <span class="ctx-label">📄</span>
+      <span class="ctx-label">CV</span>
       <span class="ctx-value" id="ctxResumeText"></span>
     </div>
     <div class="ctx-row" id="ctxPrefs" hidden>
-      <span class="ctx-label">🎯</span>
+      <span class="ctx-label">GO</span>
       <span class="ctx-value" id="ctxPrefsText"></span>
     </div>
     <div class="ctx-row" id="ctxPage" hidden>
-      <span class="ctx-label" id="ctxPageIcon">📌</span>
+      <span class="ctx-label" id="ctxPageIcon">PG</span>
       <span class="ctx-value" id="ctxPageText"></span>
     </div>
   </section>
@@ -78,10 +86,28 @@
   <main class="app-body">
     <!-- Tab: AI 对话 -->
     <section class="tab-pane active" id="tab-chat">
+      <section class="context-workspace" id="contextWorkspace">
+        <div class="cw-kicker" data-i18n="cw.kicker">当前页面</div>
+        <div class="cw-main">
+          <div class="cw-copy">
+            <div class="cw-title" id="cwTitle" data-i18n="cw.emptyTitle">打开一个岗位页开始</div>
+            <div class="cw-sub" id="cwSub" data-i18n="cw.emptySub">我会读取当前页面上下文，并给出摘要、匹配度和下一步操作。</div>
+          </div>
+        </div>
+        <div class="cw-actions" id="cwActions">
+          <button type="button" class="cw-action" data-cw-prompt="总结当前页面" data-i18n="cw.action.summarize">总结</button>
+          <button type="button" class="cw-action" data-cw-prompt="评估当前职位与我的匹配度" data-i18n="cw.action.match">匹配度</button>
+          <button type="button" class="cw-action" data-cw-prompt="帮我生成一段打招呼消息" data-i18n="cw.action.draft">生成招呼</button>
+          <button type="button" class="cw-action" data-cw-prompt="搜索相似的高匹配岗位" data-i18n="cw.action.similar">相似岗位</button>
+        </div>
+      </section>
       <div class="chat" id="chatStream"></div>
-      <div class="chat-hints" id="chatHints"></div>
       <div class="chat-input-box">
-        <textarea id="chatInput" rows="1" placeholder="问我想做什么…" data-i18n-attr="placeholder:chat.placeholder"></textarea>
+        <div class="chat-command-wrap">
+          <button class="chat-command-btn" id="chatCommandBtn" type="button" aria-label="快捷指令" aria-expanded="false">/</button>
+          <div class="chat-hints" id="chatHints" hidden></div>
+        </div>
+        <textarea id="chatInput" rows="1" placeholder="询问当前页面…" data-i18n-attr="placeholder:chat.placeholder"></textarea>
         <button class="send-btn" id="chatSendBtn" type="button" data-i18n="chat.send">发送</button>
       </div>
     </section>
@@ -104,12 +130,12 @@
       <div id="view-profile" class="af-ui"></div>
     </section>
 
-    <!-- Tab: 工具(二级菜单:表单填写 / 填写记录 / API录制)-->
+    <!-- Tab: 工具(二级菜单:智能填表 / 填写记录 / API录制)-->
     <section class="tab-pane" id="tab-tools">
       <nav class="subnav" id="toolsSubnav">
-        <button class="subnav-btn active" data-sub="detect" type="button" data-i18n="tools.sub.detect">🔍 表单填写</button>
-        <button class="subnav-btn" data-sub="log" type="button" data-i18n="tools.sub.log">📜 填写记录</button>
-        <button class="subnav-btn" data-sub="recorder" type="button" data-i18n="tools.sub.recorder">📹 API录制</button>
+        <button class="subnav-btn active" data-sub="detect" type="button" data-i18n="tools.sub.detect">智能填表</button>
+        <button class="subnav-btn" data-sub="log" type="button" data-i18n="tools.sub.log">填写记录</button>
+        <button class="subnav-btn" data-sub="recorder" type="button" data-i18n="tools.sub.recorder">API录制</button>
       </nav>
       <div class="tools-pane af-ui">
         <section class="tools-view" id="view-detect"></section>
@@ -121,7 +147,7 @@
     <!-- 登录 Gate(整层覆盖)-->
     <div class="login-gate" id="loginGate">
       <div class="card">
-        <div class="ico" aria-hidden="true">🔐</div>
+        <div class="ico" aria-hidden="true">ID</div>
         <div style="font-size:var(--text-lg);font-weight:var(--fw-medium)" data-i18n="login.title">未登录</div>
         <div style="font-size:var(--text-sm);color:var(--muted)" data-i18n="login.desc">
           在扩展内登录后即可使用 AI 助手与全部功能.

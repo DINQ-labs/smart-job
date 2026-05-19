@@ -17,7 +17,7 @@
 #tab-tools .subnav {
   display: flex;
   gap: var(--sp-1);
-  padding: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-2);
   background: var(--surface);
   border-bottom: 1px solid var(--border-soft);
   flex-shrink: 0;
@@ -27,7 +27,7 @@
   padding: var(--sp-1\.5) var(--sp-1);
   border: 1px solid var(--border-soft);
   border-radius: var(--rd-md);
-  background: var(--surface-alt);
+  background: transparent;
   color: var(--muted);
   font-size: var(--text-tiny);
   font-weight: var(--fw-normal);
@@ -36,8 +36,8 @@
   white-space: nowrap;
 }
 #tab-tools .subnav-btn.active {
-  background: var(--accent-bg);
-  border-color: var(--accent-border);
+  background: var(--surface-alt);
+  border-color: var(--border-soft);
   color: var(--accent);
 }
 #tab-tools .tools-pane {
@@ -53,10 +53,11 @@
 /* ── 卡片 ───────────────────────────────────────────────── */
 .af-ui .card {
   background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--rd-xl);
-  padding: var(--sp-3);
-  margin-bottom: var(--sp-3);
+  border: 0;
+  border-radius: 0;
+  padding: var(--sp-3) var(--sp-3\.5);
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border-soft);
 }
 .af-ui .card-amber,
 .af-ui .card.card-amber {
@@ -99,7 +100,7 @@
   border-color: var(--accent);
   color: var(--white);
 }
-.af-ui .btn-primary:hover { background: var(--blue-600); filter: brightness(1.05); }
+.af-ui .btn-primary:hover { background: var(--slate-800); filter: none; }
 .af-ui .btn-block { display: flex; width: 100%; margin-top: var(--sp-2); }
 
 /* ── 提示 / 空状态 ──────────────────────────────────────── */
@@ -135,9 +136,10 @@
   display: flex;
   align-items: center;
   gap: var(--sp-2);
-  padding: var(--sp-2) 0;
+  padding: var(--sp-2);
   border-bottom: 1px solid var(--border-soft);
 }
+.af-ui .field-row:hover { background: var(--surface-alt); }
 .af-ui .field-row:last-child { border-bottom: none; }
 .af-ui .field-row.is-low { background: var(--amber-50); }
 .af-ui .field-main { flex: 1; min-width: 0; }
@@ -188,7 +190,6 @@
   gap: var(--sp-2);
   cursor: pointer;
 }
-.af-ui .pf-sec-ico { font-size: var(--text-base); }
 .af-ui .pf-sec-title {
   font-size: var(--text-sm);
   font-weight: var(--fw-medium);

@@ -480,35 +480,85 @@
   color: var(--muted-2);
 }
 
-/* AI 主动提示条(9 种场景)*/
-.chat-hints {
-  display: flex; flex-wrap: wrap; gap: var(--sp-1\.5);
-  padding: var(--sp-3) var(--sp-4);
-  border-top: 1px solid var(--border-soft);
-  background: var(--surface);
-}
-.chat-hints[hidden] { display: none !important; }
-.chat-hints::before {
-  content: '/';
-  width: 24px; height: 24px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--rd-md);
-  color: var(--muted);
-  background: var(--surface-alt);
-  font-weight: var(--fw-medium);
-}
-.chat-hint { /* 单条 hint chip(沿用 .chip 视觉 + 微调) */
-  font-size: var(--text-xs);
-  border-radius: var(--rd-md);
-}
-
 /* 输入框 */
 .chat-input-box {
+  position: relative;
   display: flex; align-items: flex-end; gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-4);
   background: var(--surface);
   border-top: 1px solid var(--border-soft);
+}
+.chat-command-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+.chat-command-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rd-md);
+  background: var(--surface-alt);
+  color: var(--muted);
+  font-size: var(--text-md);
+  font-weight: var(--fw-medium);
+}
+.chat-command-btn:hover,
+.chat-command-btn.open {
+  background: var(--notion-hover);
+  border-color: var(--slate-300);
+  color: var(--ink-2);
+}
+.chat-hints {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + var(--sp-2));
+  z-index: 40;
+  width: min(240px, calc(100vw - 32px));
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-1);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rd-md);
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+.chat-hints[hidden] { display: none !important; }
+.chat-hint {
+  width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1\.5);
+  justify-content: flex-start;
+  padding: var(--sp-1\.5) var(--sp-2);
+  border: 0;
+  border-radius: var(--rd-sm);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  text-align: left;
+  line-height: var(--leading-snug);
+}
+.chat-hint:hover {
+  background: var(--surface-alt);
+  color: var(--ink);
+}
+.chat-hint span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chat-hint span[aria-hidden="true"] {
+  flex: 0 0 auto;
+  font-size: var(--text-xs);
+  opacity: 0.75;
 }
 .chat-input-box textarea {
   flex: 1; min-height: 32px; max-height: 120px;
@@ -1010,8 +1060,6 @@
   display: flex; align-items: center; gap: var(--sp-3);
   padding: var(--sp-4);
   background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--rd-md);
 }
 .my-avatar {
   width: 48px; height: 48px; border-radius: var(--rd-full);
@@ -1032,8 +1080,6 @@
 }
 .my-list {
   background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--rd-md);
   overflow: hidden;
 }
 .my-list-item {
@@ -1046,20 +1092,6 @@
 }
 .my-list-item:last-child { border-bottom: 0; }
 .my-list-item:hover { background: var(--surface-alt); }
-.my-list-item .ico {
-  width: 26px;
-  height: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--rd-xs);
-  background: var(--surface-alt);
-  color: var(--muted);
-  font-size: var(--text-micro);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0;
-}
 .my-list-item .arrow { margin-left: auto; color: var(--muted-2); }
 
 /* ── 12. Onboarding ob-*(5 步 wizard,沿用 welcome 同款 100% 自适应)──── */
@@ -1865,114 +1897,6 @@
   text-align: center;
 }
 .login-gate .ico { font-size: var(--text-3xl); color: var(--muted); }
-
-/* ── 16b. 顶栏平台 / 角色切换弹窗 ─────────────────────────── */
-.mode-switch-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: var(--sp-10) var(--sp-4) var(--sp-4);
-  background: rgba(247,247,245,0.72);
-}
-.mode-switch-card {
-  width: min(100%, 360px);
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--rd-md);
-  box-shadow: var(--shadow-modal);
-  padding: var(--sp-4);
-}
-.mode-switch-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-4);
-}
-.mode-switch-kicker {
-  color: var(--muted);
-  font-size: var(--text-micro);
-  font-weight: var(--fw-medium);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.mode-switch-title {
-  margin: var(--sp-0\.5) 0 0;
-  color: var(--ink);
-  font-size: var(--text-lg);
-  font-weight: var(--fw-medium);
-  line-height: var(--leading-snug);
-}
-.mode-switch-close {
-  width: 26px;
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--rd-md);
-  color: var(--muted);
-  background: var(--surface-alt);
-}
-.mode-switch-close:hover { background: var(--notion-hover); color: var(--ink-2); }
-.mode-switch-section { margin-top: var(--sp-3); }
-.mode-switch-label {
-  margin-bottom: var(--sp-1\.5);
-  color: var(--muted);
-  font-size: var(--text-xs);
-  font-weight: var(--fw-medium);
-}
-.mode-options {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--sp-1\.5);
-}
-.mode-options[data-group="role"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.mode-option {
-  min-height: 38px;
-  padding: var(--sp-2);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: var(--sp-0\.5);
-  background: var(--surface-alt);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--rd-md);
-  color: var(--ink-2);
-  text-align: left;
-}
-.mode-option:hover { background: var(--notion-hover); border-color: var(--slate-300); }
-.mode-option.selected {
-  background: var(--slate-900);
-  border-color: var(--slate-900);
-  color: var(--white);
-}
-.mode-option-title {
-  font-size: var(--text-xs);
-  font-weight: var(--fw-medium);
-  line-height: var(--leading-tight);
-}
-.mode-option-sub {
-  color: currentColor;
-  opacity: 0.7;
-  font-size: var(--text-micro);
-  line-height: var(--leading-tight);
-}
-.mode-switch-current {
-  margin-top: var(--sp-3);
-  color: var(--muted);
-  font-size: var(--text-xs);
-}
-.mode-switch-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--sp-2);
-  margin-top: var(--sp-4);
-}
 
 /* ── 17. 应用根布局 ───────────────────────────────────────── */
 #app {

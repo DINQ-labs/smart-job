@@ -83,7 +83,7 @@
     el.innerHTML = `
       <div class="pf-subhead">${t('autofill.profileSubhead')}</div>
 
-      ${section('resume', '📄', t('autofill.sectionResume'),
+      ${section('resume', t('autofill.sectionResume'),
         resume ? esc(resume.fileName) : t('autofill.resumeNoFile'), `
         <label class="btn btn-block">
           ${resume ? t('autofill.resumeReupload') : t('autofill.resumeUploadBtn')}
@@ -92,7 +92,7 @@
         ${renderResumeParsed()}
       `)}
 
-      ${section('info', '👤', t('autofill.sectionInfo'),
+      ${section('info', t('autofill.sectionInfo'),
         filledCount ? t('autofill.infoFilled', { n: filledCount }) : t('autofill.infoEmpty'), `
         ${commonRows}
         ${customRows
@@ -109,12 +109,11 @@
     el.querySelector('#af-pf-save').addEventListener('click', save);
   }
 
-  function section(name, ico, title, meta, bodyHtml) {
+  function section(name, title, meta, bodyHtml) {
     const open = expanded.has(name);
     return `
       <div class="card pf-section">
         <div class="pf-sec-head" data-toggle="${name}">
-          <span class="pf-sec-ico" aria-hidden="true">${ico}</span>
           <span class="pf-sec-title">${esc(title)}</span>
           <span class="pf-sec-meta">${esc(meta)}</span>
           <span class="pf-sec-arrow">${open ? '▾' : '▸'}</span>

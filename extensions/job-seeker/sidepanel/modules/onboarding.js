@@ -1,22 +1,16 @@
 /*
- * modules/onboarding.js — 通用 onboarding 5 步 wizard(DESIGN.md §6.2 ob-*).
+ * modules/onboarding.js — 通用 onboarding wizard(DESIGN.md §6.2 ob-*).
  *
- * 时序:扩展首屏即「登录 / 注册」(openLogin → Step 3,login-first)。登录成功后
- *      afterAccountReady() 续跑 Step 1 角色选择 → 平台 → 平台登录 → 简历,走完写 onboarded=true.
- *      app.js 启动路由:未登录 → openLogin();已登录未引导 → startOnboarding().
+ * SmartJob 账号登录是前置门禁,不计入 onboarding 步骤。未登录时由 app.js
+ * 调 openLogin() 先完成登录;登录成功后再进入下面的使用场景 / 平台流程。
  *
- * 步骤:
+ * 可见 onboarding:
  *   1 · 选择身份     jobseeker / recruiter,点即选(无确定按钮)
  *   2 · 选择平台     Boss / LinkedIn / Indeed,auto-detect 当前 tab 给高亮
- *   3 · 登录助手账号 email + 密码登录 / 邮箱验证码注册
- *   4 · 登录平台     检测平台登录态;未登录 → "前往 XX 登录" 按钮 + 手动检查
+ *   3 · 登录平台     检测平台登录态;未登录 / 异常 → 登录引导 + 手动检查
+ *   4 · 初始化资料   求职者首次使用时补简历 / 偏好;招聘者直接完成
  *
- * 进度条 4 段.
- *
- * 100% 高度自适应:.ob-mask align-items: stretch + .ob-card height: 100%.
- *
- * MVP 占位:
- *   - 平台登录检测真逻辑在 background.js,这里 fake "检测中..." 1.5s 后给手动按钮
+ * 顶栏切换模式时,前两步由弹窗完成,然后直接进入 Step 3 平台登录检测。
  */
 (function () {
   'use strict';
@@ -84,11 +78,12 @@
     platform: '',     // 'boss' | 'linkedin' | 'indeed'
     accountMethod: '',// 'email'
     accountEmail: '',
-    accountOk: false, // step 3 完成?
-    preAuthed: false, // 进 wizard 时已登录(如「切换角色」)→ 跳过 Step 3 不重登
-    loginFirst: false,// 由 openLogin() 进入:Step 3 作为扩展首屏(无返回 / 无进度条)
-    alreadyOnboarded: false, // 之前已完成过引导 → 跳过 Step 5(简历/偏好),不重复弹
-    platOk: false,    // step 4 平台已登录?
+    accountOk: false, // SmartJob 登录门禁完成?
+    preAuthed: false, // 进 wizard 时已登录 → 直接走可见 onboarding
+    loginFirst: false,// 由 openLogin() 进入:前置登录页(无返回 / 无进度条)
+    modeSwitchFlow: false, // 顶栏切换模式进入:选择平台后只做平台登录检测,成功后直接回 AI 助手
+    alreadyOnboarded: false, // 之前已完成过引导 → 跳过资料初始化,不重复弹
+    platOk: false,    // 平台已登录?
     detectTimer: null,
     // 邮箱注册/登录表单
     mode: 'signup',         // 'signup' | 'signin'，控制 step 3 表单 CTA
@@ -99,12 +94,12 @@
     busy: false,            // 提交进行中，禁用 CTA
     cooldownEnds: 0,        // 重发倒计时基线（ms timestamp）
     cooldownTimer: null,    // 1Hz 重绘 #obResend 用的 setInterval
-    // Step 5a/5b/5c — 简历获取 / AI 解析 / 分析结果
+    // 资料初始化 — 简历获取 / AI 解析 / 分析结果
     bgMethod: '',           // 'upload' | 'manual'
     resumeFile: null,       // 待上传的简历 File
     resumeParseStatus: '',  // 'uploading'|'parsing'|'analyzing'|'failed'|'timeout'
     suggestion: null,       // { job_role, city, salary_range, notes, skills[] }
-    prefsEditing: false,    // Step 5c 编辑子状态
+    prefsEditing: false,    // 偏好编辑子状态
     confirmedPrefs: null,   // 已确认偏好(finish 传给 chat 开场白)
     pollTimer: null,        // resume 解析轮询 setInterval
     pollDeadline: 0,        // 轮询超时基线
@@ -119,10 +114,11 @@
 
   // ── 子渲染 ────────────────────────────────────────────────────
   function renderProgress(active) {
-    // active: 1..6(step 3a/3c 仍显 3;5a/5b 显 5;5c 显 6)
+    // SmartJob 登录已前置;可见 onboarding 只展示 4 个阶段:
+    // 1 选择场景 / 2 选择平台 / 3 平台登录检测 / 4 求职偏好初始化
     return `
       <div class="ob-progress-bar">
-        ${[1,2,3,4,5,6].map(n => {
+        ${[1,2,3,4].map(n => {
           let cls = '';
           if (n < active) cls = 'done';
           else if (n === active) cls = 'active';
@@ -136,14 +132,14 @@
   }
 
   function renderHood() {
-    // 品牌区 = 「🏠 首页」按钮:与主顶栏一致,向导内也能随时回首页
+    // 品牌区 = 「首页」按钮:与主顶栏一致,向导内也能随时回首页
     return `
       <header class="ob-hood">
         <button type="button" class="ob-home" id="obHome" title="${t('header.homeTitle')}">
-          <span class="ob-bot" aria-hidden="true">🏠</span>
+          <span class="ob-bot" aria-hidden="true">S</span>
           <span class="ob-brand">${t('onboarding.home')}</span>
         </button>
-        <button type="button" class="ob-settings" id="obSettings" title="${t('header.settingsTitle')}">⚙️</button>
+        <button type="button" class="ob-settings" id="obSettings" title="${t('header.settingsTitle')}">ST</button>
       </header>`;
   }
 
@@ -158,8 +154,8 @@
   // ── Step 1:角色 ──────────────────────────────────────────────
   function renderStep1() {
     const cards = [
-      { v: 'jobseeker', ico: '🔍', tk: 'onboarding.step1.roleJobseeker', dk: 'onboarding.step1.roleJobseekerDesc' },
-      { v: 'recruiter', ico: '👥', tk: 'onboarding.step1.roleRecruiter', dk: 'onboarding.step1.roleRecruiterDesc' },
+      { v: 'jobseeker', ico: 'JS', tk: 'onboarding.step1.roleJobseeker', dk: 'onboarding.step1.roleJobseekerDesc' },
+      { v: 'recruiter', ico: 'HR', tk: 'onboarding.step1.roleRecruiter', dk: 'onboarding.step1.roleRecruiterDesc' },
     ];
     const html = cards.map(c => `
       <div class="ob-option-card ${state.role === c.v ? 'selected' : ''}" data-role="${c.v}">
@@ -209,7 +205,7 @@
       ${renderFooter(t('onboarding.step2.footer'), t('onboarding.step2.footerHint'))}`;
   }
 
-  // ── Step 3:登录助手账号（注册 / 登录 双模式）──────────────────
+  // ── SmartJob 前置登录页（注册 / 登录 双模式,不计入 onboarding 步骤）──
   function renderStep3() {
     const mode = state.mode === 'signin' ? 'signin' : 'signup';
     const primaryLabel = mode === 'signup' ? t('onboarding.step3.ctaSignup') : t('onboarding.step3.ctaSignin');
@@ -219,7 +215,7 @@
     return `
       ${renderHood()}
       ${state.loginFirst ? '' : renderBack()}
-      ${state.loginFirst ? '' : renderProgress(3)}
+      ${state.loginFirst ? '' : renderProgress(2)}
       <div class="ob-body">
         <h2 class="ob-title">${t('onboarding.step3.title')}</h2>
         <p class="ob-desc">${desc}</p>
@@ -261,14 +257,14 @@
       ${renderFooter(t('onboarding.step3.footer'), mode === 'signup' ? t('onboarding.step3.footerSignup') : t('onboarding.step3.footerSignin'))}`;
   }
 
-  // ── Step 3c:输入邮箱验证码 ─────────────────────────────────────
+  // ── SmartJob 前置登录验证码页 ─────────────────────────────────
   function renderStep3c() {
     const target = state.accountEmail ? maskEmail(state.accountEmail) : t('onboarding.step3c.desc').replace(' {email}', '');
     const cooldownLeft = Math.max(0, Math.ceil((state.cooldownEnds - Date.now()) / 1000));
     return `
       ${renderHood()}
       ${renderBack()}
-      ${renderProgress(3)}
+      ${state.loginFirst ? '' : renderProgress(2)}
       <div class="ob-body">
         <h2 class="ob-title">${t('onboarding.step3c.title')}</h2>
         <p class="ob-desc">${t('onboarding.step3c.desc', { email: escapeText(target) })}</p>
@@ -300,7 +296,7 @@
       ${renderFooter(t('onboarding.step3c.footer'), t('onboarding.step3c.footerHint'))}`;
   }
 
-  // ── Step 4:登录平台(按 getPlatformGuides()[state.platform] 渲染)────
+  // ── Step 3:登录目标平台(按 getPlatformGuides()[state.platform] 渲染)───
   function renderStep4() {
     const PLATFORM_GUIDES = getPlatformGuides();
     const guide = PLATFORM_GUIDES[state.platform] || PLATFORM_GUIDES.boss;
@@ -319,7 +315,7 @@
     return `
       ${renderHood()}
       ${renderBack()}
-      ${renderProgress(4)}
+      ${renderProgress(3)}
       <div class="ob-body">
         <h2 class="ob-title">${t('onboarding.step4.title', { platform: escapeText(platLabel) })}</h2>
         <p class="ob-desc">${t('onboarding.step4.desc', { platform: escapeText(platLabel) })}</p>
@@ -340,7 +336,7 @@
 
         ${guide.faqHint ? `
           <div style="font-size:var(--text-xs);color:var(--muted);line-height:var(--leading-relaxed);padding:var(--sp-2);background:var(--surface-alt);border-radius:var(--rd-md)">
-            💡 ${escapeText(guide.faqHint)}
+            ${escapeText(guide.faqHint)}
           </div>
         ` : ''}
       </div>
@@ -367,12 +363,12 @@
       ${renderFooter(t('onboarding.step4.footer', { platform: escapeText(platLabel) }), detected ? t('onboarding.step4.footerDetected') : t('onboarding.step4.footerPending'))}`;
   }
 
-  // ── Step 5a:了解你的背景(三种简历/偏好获取方式)──────────────
+  // ── Step 4a:了解你的背景(三种简历/偏好获取方式)──────────────
   function renderStep5a() {
     return `
       ${renderHood()}
       ${renderBack()}
-      ${renderProgress(5)}
+      ${renderProgress(4)}
       <div class="ob-body">
         <span class="ob-mode-chip">${t('onboarding.step5a.modeChip')}</span>
         <h2 class="ob-title">${t('onboarding.step5a.title')}</h2>
@@ -380,7 +376,7 @@
         <input type="file" id="obResumeInput" accept=".pdf,.doc,.docx" hidden>
         <div style="display:flex;flex-direction:column;gap:var(--sp-2)">
           <div class="ob-option-card" data-bg="upload">
-            <span class="ob-option-ico" aria-hidden="true">📄</span>
+            <span class="ob-option-ico" aria-hidden="true">CV</span>
             <div class="ob-option-text">
               <div class="ob-option-title">${t('onboarding.step5a.uploadTitle')}</div>
               <div class="ob-option-desc">${t('onboarding.step5a.uploadDesc')}</div>
@@ -388,7 +384,7 @@
             <span style="color:var(--muted);font-size:var(--text-lg)" aria-hidden="true">→</span>
           </div>
           <div class="ob-option-card disabled" data-bg="boss">
-            <span class="ob-option-ico" aria-hidden="true">🔍</span>
+            <span class="ob-option-ico" aria-hidden="true">AI</span>
             <div class="ob-option-text">
               <div class="ob-option-title">${t('onboarding.step5a.bossTitle')}</div>
               <div class="ob-option-desc">${t('onboarding.step5a.bossDesc')}</div>
@@ -396,7 +392,7 @@
             <span class="ob-option-badge">${t('onboarding.step5a.bossBadge')}</span>
           </div>
           <div class="ob-option-card" data-bg="manual">
-            <span class="ob-option-ico" aria-hidden="true">✏️</span>
+            <span class="ob-option-ico" aria-hidden="true">ED</span>
             <div class="ob-option-text">
               <div class="ob-option-title">${t('onboarding.step5a.manualTitle')}</div>
               <div class="ob-option-desc">${t('onboarding.step5a.manualDesc')}</div>
@@ -409,7 +405,7 @@
       ${renderFooter(t('onboarding.step5a.footer'), t('onboarding.step5a.footerHint'))}`;
   }
 
-  // ── Step 5b:上传 + 解析进度 ──────────────────────────────────
+  // ── Step 4b:上传 + 解析进度 ──────────────────────────────────
   function renderStep5b() {
     const st = state.resumeParseStatus;
     let body;
@@ -440,7 +436,7 @@
     return `
       ${renderHood()}
       ${renderBack()}
-      ${renderProgress(5)}
+      ${renderProgress(4)}
       <div class="ob-body">
         <span class="ob-mode-chip">${t('onboarding.step5b.modeChip')}</span>
         <h2 class="ob-title">${t('onboarding.step5b.title')}</h2>
@@ -458,7 +454,7 @@
       ${renderFooter(t('onboarding.step5b.footer'), t('onboarding.step5b.footerHint'))}`;
   }
 
-  // ── Step 5c:AI 分析结果(summary)/ 偏好编辑(form)────────────
+  // ── Step 4c:AI 分析结果(summary)/ 偏好编辑(form)────────────
   function renderStep5c() {
     return state.prefsEditing ? renderStep5cForm() : renderStep5cSummary();
   }
@@ -472,13 +468,13 @@
     return `
       ${renderHood()}
       ${renderBack()}
-      ${renderProgress(6)}
+      ${renderProgress(4)}
       <div class="ob-body">
         <span class="ob-mode-chip">${t('onboarding.step5c.modeChip')}</span>
         <h2 class="ob-title">${t('onboarding.step5c.summaryTitle')}</h2>
         <p class="ob-desc">${t('onboarding.step5c.summaryDesc')}</p>
         <div class="ob-result-card">
-          <div class="ob-result-head"><span aria-hidden="true">🤖</span> ${t('onboarding.step5c.aiLabel')}</div>
+          <div class="ob-result-head">${t('onboarding.step5c.aiLabel')}</div>
           <div class="ob-result-field">
             <div class="ob-field-label">${t('onboarding.step5c.fieldRole')}</div>
             ${box(s.job_role)}
@@ -522,7 +518,7 @@
     return `
       ${renderHood()}
       ${renderBack()}
-      ${renderProgress(6)}
+      ${renderProgress(4)}
       <div class="ob-body">
         <span class="ob-mode-chip">${t('onboarding.step5c.modeChip')}</span>
         <h2 class="ob-title">${isManual ? t('onboarding.step5c.formManualTitle') : t('onboarding.step5c.formEditTitle')}</h2>
@@ -551,13 +547,15 @@
       ${renderFooter(t('onboarding.step5c.formFooter'), t('onboarding.step5c.formFooterHint'))}`;
   }
 
-  // ── Step 5 处理逻辑 ───────────────────────────────────────────
-  // Step 4 完成:仅首次引导的求职者走 Step 5a 采集简历/偏好。
+  // ── Step 4 处理逻辑 ───────────────────────────────────────────
+  // Step 3 平台登录完成:仅首次引导的求职者走资料初始化。
   // 招聘者、或之前已完成过引导的求职者(如「切换角色」重进)直接结束 ——
-  // Step 5(简历/偏好)只在首次引导出现,不再每次重复弹。
+  // 资料初始化只在首次引导出现,不再每次重复弹。
   function completeStep4() {
     if (state.detectTimer) { clearInterval(state.detectTimer); state.detectTimer = null; }
-    if (state.role === 'jobseeker' && !state.alreadyOnboarded) {
+    if (state.modeSwitchFlow) {
+      finish();
+    } else if (state.role === 'jobseeker' && !state.alreadyOnboarded) {
       state.step = '5a';
       state.error = '';
       render();
@@ -820,12 +818,17 @@
     mask.querySelectorAll('[data-plat]').forEach(el => {
       el.addEventListener('click', () => {
         state.platform = el.dataset.plat;
-        // 已登录(如「我的 > 切换角色」)跳过 Step 3 登录,直接进平台检测
-        state.step = state.preAuthed ? 4 : 3;
+        // 顶栏切换已经发生在主界面内,必须进入平台检测;首次引导才需要兜底回前置登录页。
+        state.step = (state.modeSwitchFlow || state.preAuthed) ? 4 : 3;
+        if (state.step === 4) {
+          state.platOk = false;
+          if (state.detectTimer) { clearInterval(state.detectTimer); state.detectTimer = null; }
+        }
         render();
+        if (state.step === 4) startPlatformDetect();
       });
     });
-    // step 3 — 模式切换 [注册|登录]
+    // SmartJob 前置登录 — 模式切换 [注册|登录]
     mask.querySelectorAll('.ob-mode-toggle [data-mode]').forEach(el => {
       el.addEventListener('click', () => {
         const next = el.dataset.mode === 'signin' ? 'signin' : 'signup';
@@ -835,7 +838,7 @@
         render();
       });
     });
-    // step 3 — 邮箱表单提交
+    // SmartJob 前置登录 — 邮箱表单提交
     const emailForm = mask.querySelector('#obEmailForm');
     if (emailForm) {
       emailForm.addEventListener('submit', (e) => {
@@ -844,7 +847,7 @@
       });
       mask.querySelector('#obEyeBtn')?.addEventListener('click', toggleShowPassword);
     }
-    // step 3c — 验证码表单
+    // SmartJob 前置登录 — 验证码表单
     const codeForm = mask.querySelector('#obCodeForm');
     if (codeForm) {
       const codeInput = mask.querySelector('#obCode');
@@ -861,7 +864,7 @@
         tickCooldown();
       }
     }
-    // step 4
+    // step 3 — 平台登录检测
     mask.querySelector('#obGoPlat')?.addEventListener('click', () => {
       const guide = getPlatformGuides()[state.platform];
       const url = guide?.loginUrl || guide?.homepage;
@@ -869,7 +872,7 @@
     });
     mask.querySelector('#obManualCheck')?.addEventListener('click', manualCheck);
     mask.querySelector('#obFinish')?.addEventListener('click', completeStep4);
-    // step 5a — 背景获取方式
+    // step 4a — 背景获取方式
     mask.querySelectorAll('[data-bg]').forEach(el => {
       el.addEventListener('click', () => chooseBackground(el.dataset.bg));
     });
@@ -878,11 +881,11 @@
       if (f) startResumeUpload(f);
     });
     mask.querySelector('#obSkipBg')?.addEventListener('click', skipBackground);
-    // step 5b — 解析失败 / 超时出口
+    // step 4b — 解析失败 / 超时出口
     mask.querySelector('#obResumeRetry')?.addEventListener('click', retryResume);
     mask.querySelector('#obKeepWaiting')?.addEventListener('click', keepWaiting);
     mask.querySelector('#obToManual')?.addEventListener('click', toManualFromStep5b);
-    // step 5c — 确认 / 编辑 / 保存
+    // step 4c — 确认 / 编辑 / 保存
     mask.querySelector('#obConfirmPrefs')?.addEventListener('click', confirmPrefs);
     mask.querySelector('#obEditPrefs')?.addEventListener('click', () => {
       state.prefsEditing = true;
@@ -901,7 +904,7 @@
     mask.querySelector('#obSavePrefs')?.addEventListener('click', savePrefsForm);
   }
 
-  // hood「🏠 首页」按钮:已登录 → 关向导回 AI助手 tab;未登录 → 回登录页。
+  // hood「首页」按钮:已登录 → 关向导回 AI助手 tab;未登录 → 回前置登录页。
   async function goHomeFromWizard() {
     if (await isLoggedIn()) {
       close();
@@ -915,7 +918,7 @@
     if (state.step === 2) state.step = 1;
     else if (state.step === 3) state.step = 2;
     else if (state.step === '3c') state.step = 3;
-    else if (state.step === 4) state.step = state.preAuthed ? 2 : 3;
+    else if (state.step === 4) state.step = (state.modeSwitchFlow || state.preAuthed) ? 2 : 3;
     else if (state.step === '5a') state.step = 4;
     else if (state.step === '5b') state.step = '5a';
     else if (state.step === '5c') state.step = '5a';
@@ -932,12 +935,13 @@
     render();
   }
 
-  // 账号登录 / 注册成功后的去向:
+  // SmartJob 账号登录 / 注册成功后的去向:
   //   - 老用户(已完成过引导)→ 关向导,直接进 AI 助手;
-  //   - 新用户 → 续跑引导。账号已就绪(preAuthed),Step 2 选完平台直接跳 Step 4。
-  //     已选过角色 / 平台的 → 直接到 Step 4 平台登录,否则从 Step 1 角色选择起。
+  //   - 新用户 → 续跑可见 onboarding。账号已就绪(preAuthed),Step 2 选完平台直接跳平台登录。
+  //     已选过角色 / 平台的 → 直接到平台登录,否则从 Step 1 角色选择起。
   function afterAccountReady() {
     state.loginFirst = false;
+    state.modeSwitchFlow = false;
     if (state.alreadyOnboarded) {
       close();
       try { window.DQ.app?.switchTab?.('chat'); } catch (_) {}
@@ -952,7 +956,7 @@
     render();
   }
 
-  // ── 邮箱表单：注册 / 登录 ───────────────────────────────────────
+  // ── SmartJob 邮箱表单：注册 / 登录 ─────────────────────────────
   async function submitEmailForm() {
     const emailEl = mask.querySelector('#obEmail');
     const pwEl    = mask.querySelector('#obPassword');
@@ -1014,7 +1018,7 @@
     }
   }
 
-  // ── 验证码表单 ─────────────────────────────────────────────────
+  // ── SmartJob 验证码表单 ───────────────────────────────────────
   async function submitCodeForm() {
     const codeInput = mask.querySelector('#obCode');
     const code = (codeInput?.value || '').trim();
@@ -1154,6 +1158,7 @@
   }
 
   function startPlatformDetect() {
+    if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) return;
     if (state.detectTimer) return;
     // 立即跑一次(进入 step 4 用户可能早就登好了,不该等 2s)
     probeOnce().then(applyProbeResult);
@@ -1168,7 +1173,7 @@
     if (ok && !state.platOk) {
       state.platOk = true;
       if (state.detectTimer) { clearInterval(state.detectTimer); state.detectTimer = null; }
-      if (state.step === 4) render();
+      if (state.step === 4) completeStep4();
     }
   }
 
@@ -1179,7 +1184,7 @@
     const platformInfo = resp?.platforms?.[state.platform] || {};
     if (platformInfo.online) {
       state.platOk = true;
-      render();
+      completeStep4();
       return;
     }
     if (btn) { btn.disabled = false; btn.textContent = t('onboarding.step4.manualCheck'); }
@@ -1241,6 +1246,7 @@
   function close() {
     if (state.detectTimer) { clearInterval(state.detectTimer); state.detectTimer = null; }
     stopPoll();
+    state.modeSwitchFlow = false;
     if (!mask) return;
     mask.classList.remove('open');
     setTimeout(() => { try { mask?.remove(); } catch {} mask = null; }, 0);
@@ -1248,7 +1254,7 @@
 
   // ── 启动时机 ───────────────────────────────────────────────────
   // 续跑引导:从 Step 1 角色选择起。由 app.js 启动路由调用 ——
-  //   - login-first 登录成功后的新用户(经 afterAccountReady → Step 1);
+  //   - 前置登录成功后的新用户(经 afterAccountReady → Step 1);
   //   - 「已登录但未走完引导」的用户(冷启动直接进引导)。
   // 启动首屏由 app.js 统一路由(未登录 → openLogin;已登录未引导 → 本函数)。
   async function startOnboarding() {
@@ -1267,11 +1273,39 @@
     state.preAuthed = await isLoggedIn();
     if (state.preAuthed) state.accountOk = true;
     state.loginFirst = false;
+    state.modeSwitchFlow = false;
     state.platOk = false;
     state.error = '';
     state.info = '';
     resetStep5();
     open();
+  }
+
+  async function openPlatformCheck({ role, platform } = {}) {
+    state.step = 4;
+    state.role = role || window.DQ?.state?.role || 'jobseeker';
+    state.platform = platform || window.DQ?.state?.platform || 'boss';
+    state.accountOk = true;
+    state.loginFirst = false;
+    state.modeSwitchFlow = true;
+    state.platOk = false;
+    state.error = '';
+    state.info = '';
+    resetStep5();
+    open();
+    let u = {};
+    try {
+      const r = await chrome.storage.local.get(['user']);
+      u = (r && r.user) || {};
+    } catch (_) {}
+    state.role = role || window.DQ?.state?.role || u.role || 'jobseeker';
+    state.platform = platform || window.DQ?.state?.platform || u.platform || 'boss';
+    state.accountMethod = u.account_method || state.accountMethod || '';
+    state.accountEmail = u.email || state.accountEmail || '';
+    state.alreadyOnboarded = !!u.onboarded;
+    state.preAuthed = await isLoggedIn();
+    render();
+    startPlatformDetect();
   }
 
   // 已登录判定:本地有 access / refresh token 即视为登录态
@@ -1282,7 +1316,7 @@
     } catch (_) { return false; }
   }
 
-  // 我的 tab > 切换角色 → 复用 wizard 从 step 1;已登录则跳过 Step 3,不强迫重登
+  // 我的 tab > 切换角色 → 复用 wizard 从 step 1;已登录则不强迫重登
   window.addEventListener('dq:open-role-switcher', async () => {
     state.step = 1;
     let u = {};
@@ -1294,6 +1328,10 @@
     state.platform = window.DQ?.state?.platform || u.platform || '';
     state.alreadyOnboarded = !!u.onboarded;
     state.preAuthed = await isLoggedIn();
+    state.loginFirst = false;
+    state.modeSwitchFlow = true;
+    state.accountOk = true;
+    state.platOk = false;
     // 已登录:带上账号信息,免得 finish() 用空 email 覆盖 storage
     if (state.preAuthed) {
       state.accountOk = true;
@@ -1306,7 +1344,11 @@
     open();
   });
 
-  // Step 5a/5b/5c 相关 state 复位(重跑 wizard 时清掉上一轮残留)
+  window.addEventListener('dq:open-platform-check', (e) => {
+    openPlatformCheck(e.detail || {});
+  });
+
+  // 资料初始化相关 state 复位(重跑 wizard 时清掉上一轮残留)
   function resetStep5() {
     stopPoll();
     state.bgMethod = '';
@@ -1317,7 +1359,7 @@
     state.confirmedPrefs = null;
   }
 
-  // 扩展首屏「登录 / 注册」:Step 3 邮箱表单作为第一屏直接呈现
+  // 扩展首屏「登录 / 注册」:前置登录页作为第一屏直接呈现
   // (loginFirst → 无返回键 / 无进度条)。预填已存的 role/platform 供登录成功后续跑引导。
   async function openLogin() {
     try {
@@ -1333,7 +1375,8 @@
     state.preAuthed = false;
     state.platOk = false;
     state.mode = 'signin';      // 默认登录;表单内 [登录|注册] 可切
-    state.loginFirst = true;    // Step 3 作为首屏
+    state.loginFirst = true;    // 前置登录页作为首屏
+    state.modeSwitchFlow = false;
     state.error = '';
     state.info = '';
     resetStep5();
@@ -1342,5 +1385,5 @@
   }
 
   window.DQ = window.DQ || {};
-  window.DQ.onboarding = { open, close, openLogin, startOnboarding };
+  window.DQ.onboarding = { open, close, openLogin, startOnboarding, openPlatformCheck };
 })();

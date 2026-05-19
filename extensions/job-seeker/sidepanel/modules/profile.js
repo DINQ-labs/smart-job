@@ -49,12 +49,10 @@
 
       <div class="my-list" style="margin-top:var(--sp-3)">
         <div class="my-list-item" data-action="prefs">
-          <span class="ico" aria-hidden="true">🎯</span>
           <span>${role === 'recruiter' ? t('profile.recruiterPrefs') : t('profile.prefs')}</span>
           <span class="arrow">›</span>
         </div>
         <div class="my-list-item" data-action="settings">
-          <span class="ico" aria-hidden="true">⚙️</span>
           <span>${t('profile.settings')}</span>
           <span class="arrow">›</span>
         </div>

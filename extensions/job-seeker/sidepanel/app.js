@@ -102,10 +102,10 @@
   }
   els.headerSettings?.addEventListener('click', openSettings);
 
-  // ── 顶栏身份 pill → 角色 / 平台切换 ────────────────────────
-  // 「Boss · 求职」胶囊显示当前平台 · 角色,点它打开轻量选择弹窗。
+  // ── 顶栏身份 pill → 复用 onboarding 切换角色 / 平台 ────────────
+  // 顶栏只打开统一 onboarding 流程;选择、平台检测、保存都交给 onboarding 状态机。
   function openRoleSwitcher() {
-    openModeModal();
+    window.dispatchEvent(new CustomEvent('dq:open-role-switcher'));
   }
   els.headerMode?.addEventListener('click', openRoleSwitcher);
   els.headerMode?.addEventListener('keydown', (e) => {
@@ -140,147 +140,6 @@
     if (els.headerModeDot) els.headerModeDot.classList.toggle('online', !!p.online);
   }
 
-  function roleLabelFor(role) {
-    return role === 'recruiter' ? t('app.roleRecruiter') : t('app.roleJobseeker');
-  }
-
-  function closeModeModal() {
-    document.getElementById('modeSwitchMask')?.remove();
-  }
-
-  function isModeSupported(platform, role) {
-    return (platform || 'boss') === 'boss' && (role || 'jobseeker') === 'jobseeker';
-  }
-
-  function showModeComingSoon(platform, role) {
-    const platLabel = PLATFORM_LABELS[platform] || platform || 'SmartJob';
-    alert(`${platLabel} · ${roleLabelFor(role)} 即将上线`);
-  }
-
-  function renderOptionGroup(items, active, attr) {
-    return items.map((item) => `
-      <button type="button" class="mode-option ${item.value === active ? 'selected' : ''}"
-              data-${attr}="${item.value}">
-        <span class="mode-option-title">${item.label}</span>
-        ${item.sub ? `<span class="mode-option-sub">${item.sub}</span>` : ''}
-      </button>
-    `).join('');
-  }
-
-  function openModeModal() {
-    closeModeModal();
-    const currentPlatform = state.platform || 'boss';
-    const currentRole = state.role || 'jobseeker';
-    let draftPlatform = currentPlatform;
-    let draftRole = currentRole;
-    const mask = document.createElement('div');
-    mask.className = 'mode-switch-mask';
-    mask.id = 'modeSwitchMask';
-    mask.innerHTML = `
-      <div class="mode-switch-card" role="dialog" aria-modal="true" aria-labelledby="modeSwitchTitle">
-        <div class="mode-switch-head">
-          <div>
-            <div class="mode-switch-kicker">SmartJob</div>
-            <h2 class="mode-switch-title" id="modeSwitchTitle">切换工作模式</h2>
-          </div>
-          <button type="button" class="mode-switch-close" aria-label="关闭">✕</button>
-        </div>
-        <div class="mode-switch-section">
-          <div class="mode-switch-label">平台</div>
-          <div class="mode-options" data-group="platform">
-            ${renderOptionGroup([
-              { value: 'boss', label: 'Boss' },
-              { value: 'linkedin', label: 'LinkedIn' },
-              { value: 'indeed', label: 'Indeed' },
-            ], draftPlatform, 'platform')}
-          </div>
-        </div>
-        <div class="mode-switch-section">
-          <div class="mode-switch-label">模式</div>
-          <div class="mode-options" data-group="role">
-            ${renderOptionGroup([
-              { value: 'jobseeker', label: t('app.roleJobseeker'), sub: '找工作' },
-              { value: 'recruiter', label: t('app.roleRecruiter'), sub: '找候选人' },
-            ], draftRole, 'role')}
-          </div>
-        </div>
-        <div class="mode-switch-current">当前：${PLATFORM_LABELS[state.platform] || state.platform} · ${roleLabelFor(state.role)}</div>
-        <div class="mode-switch-actions">
-          <button type="button" class="btn ghost" data-action="cancel">取消</button>
-          <button type="button" class="btn primary" data-action="save" disabled>确定</button>
-        </div>
-      </div>
-    `;
-
-    const syncSaveState = () => {
-      const saveBtn = mask.querySelector('[data-action="save"]');
-      if (!saveBtn) return;
-      saveBtn.disabled = draftPlatform === currentPlatform && draftRole === currentRole;
-    };
-
-    const syncSelected = (group, value) => {
-      mask.querySelectorAll(`.mode-options[data-group="${group}"] .mode-option`).forEach((btn) => {
-        btn.classList.toggle('selected', btn.dataset[group] === value);
-      });
-      syncSaveState();
-    };
-
-    mask.addEventListener('click', async (e) => {
-      if (e.target === mask || e.target.closest('.mode-switch-close') || e.target.closest('[data-action="cancel"]')) {
-        closeModeModal();
-        return;
-      }
-      const platformBtn = e.target.closest('[data-platform]');
-      if (platformBtn) {
-        draftPlatform = platformBtn.dataset.platform || draftPlatform;
-        syncSelected('platform', draftPlatform);
-        return;
-      }
-      const roleBtn = e.target.closest('[data-role]');
-      if (roleBtn) {
-        draftRole = roleBtn.dataset.role || draftRole;
-        syncSelected('role', draftRole);
-        return;
-      }
-      const saveBtn = e.target.closest('[data-action="save"]');
-      if (saveBtn && !saveBtn.disabled) {
-        if (!isModeSupported(draftPlatform, draftRole)) {
-          showModeComingSoon(draftPlatform, draftRole);
-          return;
-        }
-        await applyModeSelection(draftPlatform, draftRole);
-        closeModeModal();
-        window.dispatchEvent(new CustomEvent('dq:open-platform-check', {
-          detail: { platform: draftPlatform, role: draftRole },
-        }));
-      }
-    });
-    mask.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeModeModal();
-    });
-    document.body.appendChild(mask);
-    mask.querySelector('.mode-switch-close')?.focus();
-  }
-
-  async function applyModeSelection(platform, role) {
-    const oldRole = state.role;
-    const oldPlatform = state.platform;
-    state.platform = platform || 'boss';
-    state.role = role || 'jobseeker';
-    window.DQ.config.role = state.role;
-    window.DQ.config.platform = state.platform;
-    document.body.dataset.role = state.role;
-    try {
-      const r = await chrome.storage.local.get(['user']);
-      const u = (r && r.user) || {};
-      await chrome.storage.local.set({ user: { ...u, role: state.role, platform: state.platform } });
-    } catch (_) {}
-    renderHeader();
-    renderContextWorkspace();
-    if (oldRole !== state.role) emit(NAMES.ROLE_CHANGED, { role: state.role });
-    if (oldPlatform !== state.platform) emit(NAMES.PLATFORM_CHANGED, { platform: state.platform });
-  }
-
   function renderContext() {
     // Resume 行不再在上下文条提示 —— 简历采集已由 onboarding Step 5a 接管,
     // 这里恒隐藏,避免与引导重复。
@@ -310,37 +169,44 @@
   function contextTitleFor(type) {
     return ({
       list: t('cw.listTitle'),
+      job_list: t('cw.listTitle'),
+      candidate_list: t('cw.candidateListTitle'),
       detail: t('cw.detailTitle'),
+      job_detail: t('cw.detailTitle'),
+      candidate_detail: t('cw.candidateDetailTitle'),
       chat: t('cw.chatTitle'),
-      off_platform: t('cw.offPlatformTitle'),
+      job_management: t('cw.jobManagementTitle'),
+      apply_form: t('cw.applyFormTitle'),
       other: t('cw.otherTitle'),
     })[type] || t('cw.emptyTitle');
+  }
+
+  function isActionablePageType(type) {
+    return new Set([
+      'list', 'detail', 'chat',
+      'job_list', 'job_detail',
+      'candidate_list', 'candidate_detail',
+      'job_management', 'apply_form',
+    ]).has(type);
   }
 
   function renderContextWorkspace() {
     if (!els.contextWorkspace) return;
     const ctx = state.pageContext || {};
-    const type = ctx.page_type || '';
-    const hasContext = !!(type || ctx.title || ctx.url);
-    const title = hasContext
-      ? (ctx.title || contextTitleFor(type))
-      : t('cw.emptyTitle');
-    let sub = t('cw.emptySub');
-    if (hasContext) {
-      if (type === 'off_platform') {
-        sub = t('cw.offPlatformSub');
-      } else {
-        const kind = contextTitleFor(type);
-        const count = ctx.page_item_count ? ` · ${t('cw.itemCount', { n: ctx.page_item_count })}` : '';
-        sub = `${kind}${count}`;
-      }
+    const type = ctx.page_type || ctx.kind || '';
+    if (!isActionablePageType(type)) {
+      els.contextWorkspace.hidden = true;
+      return;
     }
+    els.contextWorkspace.hidden = false;
+    const title = ctx.title || contextTitleFor(type);
+    const kind = contextTitleFor(type);
+    const count = ctx.page_item_count ? ` · ${t('cw.itemCount', { n: ctx.page_item_count })}` : '';
+    const sub = `${kind}${count}`;
     if (els.cwTitle) els.cwTitle.textContent = title;
     if (els.cwSub) els.cwSub.textContent = sub;
-    const onPlatform = hasContext && type !== 'off_platform';
-    els.contextWorkspace.classList.toggle('is-empty', !onPlatform);
     els.cwActions?.querySelectorAll('button').forEach((btn) => {
-      btn.disabled = !onPlatform;
+      btn.disabled = false;
     });
   }
 
@@ -443,7 +309,7 @@
       url:             ctx.url || '',
       title:           ctx.title || '',
       kind:            ctx.kind || '',
-      page_type:       ctx.page_type || '',
+      page_type:       ctx.page_type || ctx.kind || '',
       page_item_count: Number(ctx.page_item_count || 0) || 0,
     };
     renderContext();
