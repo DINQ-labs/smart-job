@@ -223,7 +223,7 @@ const zh: Record<DocSlug, DocContent> = {
         t: "ul",
         items: [
           "一个支持 Manifest V3 与侧边栏的浏览器:较新版本的 Chrome / Chromium / Edge。",
-          "后端已启动(推荐用 Docker 一键拉起)。启动后 portal-api、api-gateway、agent-gateway 分别监听 8771 / 8767 / 8769。",
+          "要不要自己跑后端取决于怎么用:连演示环境(api.smartjob.top)不用自己启动后端;本地部署则先用 Docker 把后端跑起来,portal-api、api-gateway、agent-gateway 分别监听 8771 / 8767 / 8769。",
         ],
       },
       { t: "h2", text: "加载扩展到浏览器" },
@@ -239,21 +239,21 @@ const zh: Record<DocSlug, DocContent> = {
       { t: "h2", text: "配置后端网关地址" },
       {
         t: "p",
-        text: "点工具栏的 SmartJob 图标打开侧边栏,首屏即「登录 / 注册」表单。登录前必须先把扩展指向你的后端 —— 网关地址配错会直接导致登录失败。点侧边栏顶部的「⚙️ 设置」(未登录时在登录向导左上角,登录后在主顶栏),在设置页填三个后端地址;本地 Docker 环境点「开发环境」预设可一键填入。",
+        text: "扩展靠三个网关地址连后端。点侧边栏顶部的「⚙️ 设置」(未登录时在登录向导左上角,登录后在主顶栏),设置页顶部有三个预设可一键切换 —— 选「演示环境」即用官方演示站、无需自己跑后端;本地用 Docker 跑了全栈则选「开发环境」。任意预设下都可点「连通测试」确认地址可达,网关地址配错会直接导致登录失败。",
       },
       {
         t: "table",
-        head: ["服务", "本地 Docker 地址"],
+        head: ["预设", "指向", "适用"],
         rows: [
-          ["portal-api(账号 / 鉴权)", "http://127.0.0.1:8771"],
-          ["api-gateway(命令网关)", "http://127.0.0.1:8767"],
-          ["agent-gateway(Agent 对话)", "http://127.0.0.1:8769"],
+          ["演示环境(默认)", "官方演示站 api.smartjob.top", "只想体验,不用自己跑后端"],
+          ["开发环境", "本地 127.0.0.1(8771 / 8767 / 8769)", "已用 Docker 在本地跑了全栈"],
+          ["自定义", "三个地址逐项手填", "后端部署在你自己的服务器"],
         ],
       },
       { t: "h2", text: "登录与首次引导" },
       {
         t: "p",
-        text: "回到侧边栏首屏的登录 / 注册表单:已有账号直接登录;新账号切到「注册」,填邮箱 + 密码后收邮箱验证码完成注册。本地 Docker 在开发模式下会自动播种一个测试账号(demo@smartjob.top / 123456),可直接登录 —— 这是弱口令测试账号,生产环境务必关闭播种。",
+        text: "回到侧边栏首屏的登录 / 注册表单。最快的方式是用演示账号 demo@smartjob.top / 123456 直接登录 —— 演示环境已内置该账号,本地部署时 portal-api 在开发模式下会自动播种它。也可切到「注册」自行注册:填邮箱 + 密码后输入验证码,开发模式下(本地 Docker 与演示站)验证码固定为 666666,面板上有提示。demo@smartjob.top 是弱口令演示账号,自建生产环境务必关闭播种。",
       },
       {
         t: "p",
@@ -287,6 +287,7 @@ const zh: Record<DocSlug, DocContent> = {
           "扩展登录默认账号 demo@smartjob.top —— 其用户 id 为固定常量 smartjob,必须与 .mcp.json 的 x-user-id 一致,工具调用才能路由到你的扩展。",
           "在仓库目录打开 Claude Code,首次确认信任本项目 MCP server;claude mcp list 应显示 smartjob ✓ Connected。",
           "对 Claude 说「检查 Boss 直聘登录状态」之类,它会自动调用 boss_* 工具,链路为 Claude Code → api-gateway → 扩展 → 浏览器。",
+          ".mcp.json 默认指向本地 http://127.0.0.1:8767/mcp;连演示站则把 url 换成 https://api.smartjob.top/mcp。",
         ],
       },
       { t: "p", text: "配置好后,在 Claude Code 里的实际效果 —— 从列工具到搜索、看详情、打招呼:" },
@@ -505,7 +506,7 @@ const en: Record<DocSlug, DocContent> = {
         t: "ul",
         items: [
           "A browser supporting Manifest V3 and the side panel: a recent Chrome / Chromium / Edge.",
-          "The backend running (Docker is recommended). Once up, portal-api, api-gateway and agent-gateway listen on 8771 / 8767 / 8769.",
+          "Whether you run a backend depends on how you use it: the demo environment (api.smartjob.top) needs no backend of your own; for a local deployment, start the backend first with Docker — portal-api, api-gateway and agent-gateway listen on 8771 / 8767 / 8769.",
         ],
       },
       { t: "h2", text: "Load the extension" },
@@ -521,21 +522,21 @@ const en: Record<DocSlug, DocContent> = {
       { t: "h2", text: "Configure backend gateways" },
       {
         t: "p",
-        text: "Click the SmartJob toolbar icon to open the side panel — the first screen is the login / register form. Before signing in you must point the extension at your backend; a wrong gateway URL makes login fail. Click the gear (Settings) at the top of the side panel (in the wizard's top-left before login, in the main top bar after login) and fill in the three backend URLs; for a local Docker setup the \"Development\" preset fills them in one click.",
+        text: "The extension connects to the backend via three gateway URLs. Click the gear (Settings) at the top of the side panel (in the wizard's top-left before login, in the main top bar after login); the settings page has three presets to switch in one click — pick \"Demo\" to use the official demo site with no backend of your own, or \"Development\" if you run the full stack locally with Docker. Any preset offers a connectivity test; a wrong gateway URL makes login fail.",
       },
       {
         t: "table",
-        head: ["Service", "Local Docker URL"],
+        head: ["Preset", "Points at", "Use when"],
         rows: [
-          ["portal-api (accounts / auth)", "http://127.0.0.1:8771"],
-          ["api-gateway (command gateway)", "http://127.0.0.1:8767"],
-          ["agent-gateway (agent conversation)", "http://127.0.0.1:8769"],
+          ["Demo (default)", "Official demo site api.smartjob.top", "Just trying it out — no backend of your own"],
+          ["Development", "Local 127.0.0.1 (8771 / 8767 / 8769)", "You run the full stack locally with Docker"],
+          ["Custom", "Enter all three URLs by hand", "Backend deployed on your own server"],
         ],
       },
       { t: "h2", text: "Sign in and onboarding" },
       {
         t: "p",
-        text: "Back on the login / register form: existing users sign in directly; new users switch to \"Register\", enter an email and password, and complete an email verification code. In development mode a local Docker deployment auto-seeds a test account (demo@smartjob.top / 123456) you can sign in with directly — this is a weak-password test account, and seeding must be disabled in production.",
+        text: "Back on the login / register form: the quickest way is to sign in with the demo account demo@smartjob.top / 123456 — the demo environment ships with it, and a local deployment auto-seeds it in development mode. You can also switch to \"Register\": enter an email and password, then a verification code, which is the fixed value 666666 in development mode (both local Docker and the demo site), shown on the panel. demo@smartjob.top is a weak-password demo account; disable seeding in your own production deployment.",
       },
       {
         t: "p",
@@ -569,6 +570,7 @@ const en: Record<DocSlug, DocContent> = {
           "Sign the extension in as the default account demo@smartjob.top — its user id is the fixed constant smartjob, which must match x-user-id in .mcp.json so tool calls route to your extension.",
           "Open Claude Code in the repo directory and approve the project's MCP server on first run; claude mcp list should show smartjob ✓ Connected.",
           "Tell Claude something like 'check my BOSS Zhipin login status' — it calls the boss_* tools, with the chain Claude Code → api-gateway → extension → browser.",
+          ".mcp.json points at the local http://127.0.0.1:8767/mcp by default; to use the demo site, change the url to https://api.smartjob.top/mcp.",
         ],
       },
       { t: "p", text: "Once configured, here is what it looks like in Claude Code — from listing tools to searching, viewing detail and saying hi:" },
