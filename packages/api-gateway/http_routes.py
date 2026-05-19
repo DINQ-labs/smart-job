@@ -793,7 +793,9 @@ async def admin_login(request: Request) -> JSONResponse:
         COOKIE_NAME, token,
         httponly=True,
         samesite="strict",
-        path="/admin",
+        # path=/ —— 同一会话 cookie 既鉴权 /admin/*,也供 admin 容器 nginx 对
+        # /portal/admin/* 做 auth_request 子请求校验(见 packages/admin/nginx.conf)。
+        path="/",
         max_age=7 * 24 * 3600,
     )
     return resp
@@ -804,7 +806,7 @@ async def admin_logout_admin(request: Request) -> JSONResponse:
     token = request.cookies.get(COOKIE_NAME, "")
     _admin_tokens.pop(token, None)
     resp = JSONResponse({"ok": True})
-    resp.delete_cookie(COOKIE_NAME, path="/admin")
+    resp.delete_cookie(COOKIE_NAME, path="/")
     return resp
 
 
