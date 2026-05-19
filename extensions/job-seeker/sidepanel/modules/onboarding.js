@@ -1173,7 +1173,7 @@
     if (ok && !state.platOk) {
       state.platOk = true;
       if (state.detectTimer) { clearInterval(state.detectTimer); state.detectTimer = null; }
-      if (state.step === 4) completeStep4();
+      if (state.step === 4) render();
     }
   }
 
@@ -1184,7 +1184,7 @@
     const platformInfo = resp?.platforms?.[state.platform] || {};
     if (platformInfo.online) {
       state.platOk = true;
-      completeStep4();
+      render();
       return;
     }
     if (btn) { btn.disabled = false; btn.textContent = t('onboarding.step4.manualCheck'); }
