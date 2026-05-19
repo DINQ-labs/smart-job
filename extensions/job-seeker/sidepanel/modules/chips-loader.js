@@ -16,6 +16,7 @@
   const CACHE_PREFIX = 'chip:v3:';
   let inFlight = null;
   let lastVersion = 0;
+  let menuOpen = false;
 
   function detectLang() {
     // 产品为中文优先:整个扩展 UI(welcome/onboarding/各 tab)文案均硬编码中文,
@@ -57,13 +58,18 @@
 
   function render(chips) {
     const host = document.getElementById('chatHints');
+    const trigger = document.getElementById('chatCommandBtn');
     if (!host) return;
     host.innerHTML = '';
+    host.classList.toggle('is-empty', !chips || !chips.length);
+    host.hidden = !menuOpen || !chips || !chips.length;
+    trigger?.classList.toggle('has-chips', !!(chips && chips.length));
+    trigger?.setAttribute('aria-expanded', host.hidden ? 'false' : 'true');
     if (!chips || !chips.length) return;
     chips.forEach((c) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'chip chat-hint';
+      btn.className = 'chat-hint';
       btn.dataset.prompt = c.send_text || c.label || '';
       btn.dataset.chipId = c.id || '';
       const rawLabel = c.label || c.send_text || '';
@@ -74,6 +80,16 @@
       host.appendChild(btn);
     });
     emit(NAMES.CHIPS_UPDATED, { chips });
+  }
+
+  function setMenuOpen(open) {
+    const host = document.getElementById('chatHints');
+    const trigger = document.getElementById('chatCommandBtn');
+    menuOpen = !!open;
+    const hasItems = !!host?.querySelector('.chat-hint');
+    if (host) host.hidden = !menuOpen || !hasItems;
+    trigger?.setAttribute('aria-expanded', menuOpen && hasItems ? 'true' : 'false');
+    trigger?.classList.toggle('open', menuOpen && hasItems);
   }
 
   async function refresh() {
@@ -113,17 +129,30 @@
     return p;
   }
 
-  // chip 点击 → 反查 chip id → 上报 + 把 prompt 灌进 chat input
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest && e.target.closest('.chip[data-prompt]');
-    if (!btn) return;
-    const input = document.getElementById('chatInput');
-    const prompt = btn.dataset.prompt || '';
-    if (input) {
-      input.value = prompt;
-      input.focus();
-      input.dispatchEvent(new Event('input', { bubbles: true }));
+  // Slash 菜单:点击 / 展开快捷指令,点击指令后自动发送对应 prompt。
+  document.addEventListener('click', async (e) => {
+    const trigger = e.target.closest && e.target.closest('#chatCommandBtn');
+    if (trigger) {
+      e.preventDefault();
+      const host = document.getElementById('chatHints');
+      if (!host?.querySelector('.chat-hint')) {
+        await refresh();
+        setMenuOpen(true);
+        return;
+      }
+      setMenuOpen(host.hidden);
+      return;
     }
+
+    const btn = e.target.closest && e.target.closest('#chatHints .chat-hint[data-prompt]');
+    if (!btn) {
+      if (!e.target.closest?.('.chat-command-wrap')) setMenuOpen(false);
+      return;
+    }
+    const prompt = btn.dataset.prompt || '';
+    setMenuOpen(false);
+    const sendBtn = document.getElementById('chatSendBtn');
+    if (sendBtn?.disabled) return;
     const chipId = btn.dataset.chipId || '';
     if (chipId) {
       api.agentGw.reportChipClick({
@@ -133,7 +162,12 @@
         platform: window.DQ?.state?.platform,
       }).catch(() => {});
     }
+    if (prompt) window.DQ?.chat?.send?.(prompt);
   }, true);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setMenuOpen(false);
+  });
 
   on(NAMES.ROLE_CHANGED, refresh);
   on(NAMES.PLATFORM_CHANGED, refresh);

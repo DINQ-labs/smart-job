@@ -44,14 +44,20 @@
   window.DQ.config = window.DQ.config || {};
   Object.assign(window.DQ.config, { role: state.role, platform: state.platform });
 
+  const PLATFORM_LABELS = { boss: 'Boss', linkedin: 'LinkedIn', indeed: 'Indeed' };
+
   // ── DOM 引用 ──────────────────────────────────────────────
   const $ = (id) => document.getElementById(id);
   const els = {
-    headerHome:          $('headerHome'),
     headerSettings:      $('headerSettings'),
     headerMode:          $('headerMode'),
     headerModeLabel:     $('headerModeLabel'),
     headerModeDot:       $('headerModeDot'),
+
+    contextWorkspace:    $('contextWorkspace'),
+    cwTitle:             $('cwTitle'),
+    cwSub:               $('cwSub'),
+    cwActions:           $('cwActions'),
 
     ctxBar:        $('ctxBar'),
     ctxResume:     $('ctxResume'), ctxResumeText: $('ctxResumeText'),
@@ -89,26 +95,15 @@
     if (btn) switchTab(btn.dataset.tab);
   });
 
-  // ── 顶栏品牌区「🏠 首页」→ 回首页 ──────────────────────────
-  // 已登录回 AI助手 tab;未登录回登录页。整个扩展任意位置都能随时回首页。
-  function goHome() {
-    if (state.user.loggedIn) {
-      switchTab('chat');
-    } else {
-      try { window.DQ.onboarding?.openLogin?.(); } catch (_) {}
-    }
-  }
-  els.headerHome?.addEventListener('click', goHome);
-
-  // ── 顶栏「⚙️ 设置」→ 打开扩展设置页(配置 portal / api-gw / agent-gw 网关)──
+  // ── 顶栏「设置」→ 打开扩展设置页(配置 portal / api-gw / agent-gw 网关)──
   // 任意位置(含登录前)都能改网关地址 —— 网关配错会导致登录失败,故须常驻可达。
   function openSettings() {
     try { chrome.runtime.openOptionsPage(); } catch (_) {}
   }
   els.headerSettings?.addEventListener('click', openSettings);
 
-  // ── 顶栏身份 pill → 角色 / 平台切换 ────────────────────────
-  // 「Boss · 求职」胶囊显示当前平台 · 角色,点它即开切换向导(onboarding 监听)。
+  // ── 顶栏身份 pill → 复用 onboarding 切换角色 / 平台 ────────────
+  // 顶栏只打开统一 onboarding 流程;选择、平台检测、保存都交给 onboarding 状态机。
   function openRoleSwitcher() {
     window.dispatchEvent(new CustomEvent('dq:open-role-switcher'));
   }
@@ -128,7 +123,7 @@
   }
 
   // 暴露给外部调用
-  window.DQ.app = { switchTab, renderHeader, renderContext, renderLoginGate, showJobSeekerWorkspace };
+  window.DQ.app = { switchTab, renderHeader, renderContext, renderLoginGate, renderContextWorkspace, showJobSeekerWorkspace };
 
   // 注意:求职者工作台不再随角色变化自动弹出。求职引导(onboarding Step 5a/5b/5c)
   // 已接管简历/偏好采集,引导结束直接落到 AI 对话 tab。工作台仅经
@@ -139,7 +134,7 @@
     // 顶栏身份 pill = 平台 · 角色;在线状态用绿点表示。
     // credit / 通知 已移入「我的」tab(profile.js),顶栏不再展示。
     const p = state.platformsStatus[state.platform] || { online: false };
-    const platLabel = ({ boss: 'Boss', linkedin: 'LinkedIn', indeed: 'Indeed' })[state.platform] || t('app.platUnknown');
+    const platLabel = PLATFORM_LABELS[state.platform] || t('app.platUnknown');
     const roleLabel = state.role === 'recruiter' ? t('app.roleRecruiter') : t('app.roleJobseeker');
     if (els.headerModeLabel) els.headerModeLabel.textContent = `${platLabel} · ${roleLabel}`;
     if (els.headerModeDot) els.headerModeDot.classList.toggle('online', !!p.online);
@@ -161,14 +156,58 @@
       els.ctxPage.hidden = false;
       els.ctxPageText.textContent = state.pageContext.title;
       els.ctxPageIcon.textContent = ({
-        list: '📑', detail: '📌', chat: '💬', off_platform: '🌐', other: '🗒',
-      })[state.pageContext.page_type] || '📌';
+        list: 'LS', detail: 'JD', chat: 'CH', off_platform: 'WEB', other: 'PG',
+      })[state.pageContext.page_type] || 'PG';
     } else {
       els.ctxPage.hidden = true;
     }
     // 三行都隐藏时收起整条 ctx-bar,避免留一条空白条
     const anyRow = !els.ctxResume.hidden || !els.ctxPrefs.hidden || !els.ctxPage.hidden;
     els.ctxBar.hidden = !anyRow;
+  }
+
+  function contextTitleFor(type) {
+    return ({
+      list: t('cw.listTitle'),
+      job_list: t('cw.listTitle'),
+      candidate_list: t('cw.candidateListTitle'),
+      detail: t('cw.detailTitle'),
+      job_detail: t('cw.detailTitle'),
+      candidate_detail: t('cw.candidateDetailTitle'),
+      chat: t('cw.chatTitle'),
+      job_management: t('cw.jobManagementTitle'),
+      apply_form: t('cw.applyFormTitle'),
+      other: t('cw.otherTitle'),
+    })[type] || t('cw.emptyTitle');
+  }
+
+  function isActionablePageType(type) {
+    return new Set([
+      'list', 'detail', 'chat',
+      'job_list', 'job_detail',
+      'candidate_list', 'candidate_detail',
+      'job_management', 'apply_form',
+    ]).has(type);
+  }
+
+  function renderContextWorkspace() {
+    if (!els.contextWorkspace) return;
+    const ctx = state.pageContext || {};
+    const type = ctx.page_type || ctx.kind || '';
+    if (!isActionablePageType(type)) {
+      els.contextWorkspace.hidden = true;
+      return;
+    }
+    els.contextWorkspace.hidden = false;
+    const title = ctx.title || contextTitleFor(type);
+    const kind = contextTitleFor(type);
+    const count = ctx.page_item_count ? ` · ${t('cw.itemCount', { n: ctx.page_item_count })}` : '';
+    const sub = `${kind}${count}`;
+    if (els.cwTitle) els.cwTitle.textContent = title;
+    if (els.cwSub) els.cwSub.textContent = sub;
+    els.cwActions?.querySelectorAll('button').forEach((btn) => {
+      btn.disabled = false;
+    });
   }
 
   function renderLoginGate() {
@@ -270,10 +309,11 @@
       url:             ctx.url || '',
       title:           ctx.title || '',
       kind:            ctx.kind || '',
-      page_type:       ctx.page_type || '',
+      page_type:       ctx.page_type || ctx.kind || '',
       page_item_count: Number(ctx.page_item_count || 0) || 0,
     };
     renderContext();
+    renderContextWorkspace();
     emit(NAMES.PAGE_CONTEXT_CHANGED, state.pageContext);
   }
 
@@ -374,6 +414,13 @@
     window.DQ.forgotPassword?.open();
   });
 
+  els.cwActions?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-cw-prompt]');
+    if (!btn || btn.disabled) return;
+    switchTab('chat');
+    window.DQ.chat?.prefill?.(btn.dataset.cwPrompt || '');
+  });
+
   // ── 启动序列 ──────────────────────────────────────────────
   (async function init() {
     // 确保语言在首屏渲染前已从 storage 读出
@@ -381,7 +428,7 @@
       await window.DQI18N.ready;
     }
     await loadUserPrefs();
-    renderHeader(); renderContext(); renderLoginGate();
+    renderHeader(); renderContext(); renderContextWorkspace(); renderLoginGate();
     setupRuntimeListener();
 
     // 冷启动:若上次连接被踢出且尚未恢复,恢复提示横幅

@@ -44,7 +44,7 @@
   function statusChip(s) {
     const map = {
       pending:    { cls: 'chip',           label: t('tasks.status.pending'),   icon: '⌛' },
-      running:    { cls: 'chip chip-green', label: t('tasks.status.running'),   icon: '⚡' },
+      running:    { cls: 'chip chip-green', label: t('tasks.status.running'),   icon: 'RN' },
       paused_user_action: { cls: 'chip chip-amber', label: t('tasks.status.paused'), icon: '⏸' },
       completed:  { cls: 'chip chip-blue',  label: t('tasks.status.completed'), icon: '✓' },
       failed:     { cls: 'chip chip-red',   label: t('tasks.status.failed'),    icon: '✕' },
@@ -120,10 +120,13 @@
           <span class="task-card-title" title="${escapeAttr(tk.title || tk.template_id)}">${escapeText(tk.title || tk.template_id)}</span>
           ${statusChip(tk.status)}
         </div>
-        <div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%"></div></div>
         <div class="task-meta">
           <span>${escapeText(progressText(tk))}${skip ? ` ${t('tasks.card.skipped', { n: skip })}` : ''}</span>
           <span>${relTime(tk.created_at)}</span>
+        </div>
+        <div class="task-progress-cell">
+          <span>${pct}%</span>
+          <div class="task-progress-bar"><div class="task-progress-fill" style="width:${pct}%"></div></div>
         </div>
         ${hint}
       </article>`;
@@ -134,7 +137,6 @@
     if (!state.tasks.length) {
       list.innerHTML = `
         <div class="empty-state">
-          <div class="empty-ico" aria-hidden="true">📋</div>
           <div class="empty-title">${t('tasks.empty.title')}</div>
           <div class="empty-sub">${t('tasks.empty.sub')}</div>
           <button class="btn primary" id="taskStartNewEmpty" type="button" style="margin-top:var(--sp-2)">${t('tasks.btn.startNew')}</button>
@@ -360,7 +362,7 @@
     if (!state.templates.length) {
       body.innerHTML = `
         <div class="empty-state">
-          <div class="empty-ico" aria-hidden="true">🛠️</div>
+          <div class="empty-ico" aria-hidden="true">TL</div>
           <div class="empty-title">${t('tasks.modal.noTpl.title')}</div>
           <div class="empty-sub">${t('tasks.modal.noTpl.sub')}</div>
         </div>`;
@@ -370,7 +372,7 @@
     body.innerHTML = `<div class="task-tpl-list">${
       state.templates.map((tpl) => `
         <button class="task-tpl-card" type="button" data-template-id="${escapeAttr(tpl.id)}">
-          <span class="task-tpl-emoji" aria-hidden="true">${escapeText(tpl.emoji || '⚡')}</span>
+          <span class="task-tpl-emoji" aria-hidden="true">TK</span>
           <span class="task-tpl-text">
             <span class="task-tpl-title">${escapeText(tpl.title || tpl.id)}</span>
             <span class="task-tpl-desc">${escapeText(tpl.description || '')}</span>
@@ -405,7 +407,7 @@
     if (!document.body.contains(mask)) return;
     schema = applyPrefsToSchema(schema, prefs);
 
-    if (titleEl) titleEl.textContent = `${tpl.emoji || '⚡'} ${tpl.title || templateId}`;
+    if (titleEl) titleEl.textContent = tpl.title || templateId;
 
     let fieldsHtml;
     if (!schema.length) {
