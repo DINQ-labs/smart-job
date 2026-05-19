@@ -899,8 +899,10 @@ async def admin_users_delete(request: Request) -> JSONResponse:
 
 async def handle_admin_ws(websocket: WebSocket) -> None:
     """Admin 实时推送 WebSocket（/admin/ws）。"""
-    # 认证检查（支持 Cookie 或 ?token= 查询参数）
-    if ADMIN_PASSWORD:
+    # 认证检查（支持 Cookie 或 ?token= 查询参数）。鉴权口径与 HTTP admin 路由一致:
+    # ADMIN_PASSWORD 已设、或 admin_users 表已有账号 → 启用鉴权。
+    await _ensure_admin_seed()
+    if await _admin_auth_enabled():
         token = websocket.cookies.get(COOKIE_NAME, "") or websocket.query_params.get("token", "")
         if not token or token not in _admin_tokens:
             await websocket.close(code=4401)

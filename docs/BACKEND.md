@@ -42,8 +42,9 @@ packages/
   服务端按 `(用户, 角色)` 维度管理会话、踢除重复登录。
 - `WS /admin/ws` —— 管理后台实时事件广播通道。
 - `GET /status`、`GET /health` —— 健康检查。
-- `/admin/*` —— 管理后台 REST API（会话列表、命令日志、浏览器槽位、动态命令下发等），
-  由 `ADMIN_PASSWORD` 保护（留空则本地开发不校验）。
+- `/admin/*` —— 管理后台 REST API（会话列表、命令日志、浏览器槽位、动态命令下发等）。
+  登录走 `admin_users` 表（bcrypt 哈希、支持多账号、可改密）；`ADMIN_PASSWORD` 是鉴权
+  开关 + 首个账号的初始口令，留空且 `admin_users` 表为空时本地开发不校验。
 
 ### 1.3 动态命令
 
@@ -62,7 +63,7 @@ packages/
 |---|---|
 | `BOSS_GATEWAY_PORT` | 监听端口（默认 8767） |
 | `DB_POSTGRES_URL` | PostgreSQL 连接串（`boss_gateway` 库） |
-| `ADMIN_PASSWORD` | 管理后台 / 管理 API 密码，留空则不校验 |
+| `ADMIN_PASSWORD` | 管理后台鉴权开关 + 首个账号 admin 的初始口令；留空且无账号则不校验 |
 | `EXT_TOKEN` | 扩展 WebSocket 接入令牌 |
 | `PROXY_POOL` | 可选，浏览器代理 IP 列表 |
 

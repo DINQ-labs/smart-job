@@ -263,8 +263,9 @@ cd /opt/smart-job && docker compose up -d --build
   - `/agent-gw/agent/sse*` 须带 `Authorization: Bearer <portal access token>`,否则 401。
   - 网关用 `PORTAL_JWKS_URL`(Docker 内网指向 portal-api)拉公钥本地 RS256 验签;
     `JWT_ISSUER` / `JWT_AUDIENCE` 对齐 portal-api 实际签发值。
-  - admin 后台 `/admin/*` 路由不受影响(走 `ADMIN_PASSWORD` cookie 鉴权)。
+  - admin 后台 `/admin/*` 路由不受影响(走管理后台账号体系的会话 cookie 鉴权)。
   - 临时关闭:把 override 里两个 `*_AUTH_REQUIRED` 改 `"false"` 后 `docker compose up -d`。
-- `ADMIN_PASSWORD` 已设 —— `dashboard.smartjob.top` 的管理后台登录受其保护。
+- `ADMIN_PASSWORD` 已设 —— 启用管理后台鉴权,并在首次启动时播种首个账号 `admin`;
+  之后登录 / 改密 / 增删账号都在后台进行(`admin_users` 表)。
 - `.env` 含 `OPENROUTER_API_KEY` 等密钥,仅存于服务器 `/opt/smart-job/.env`,
   注意文件权限,勿提交进仓库。
