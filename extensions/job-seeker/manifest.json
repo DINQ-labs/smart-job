@@ -104,7 +104,7 @@
   "permissions": [
     "tabs", "scripting", "storage", "activeTab", "cookies",
     "proxy", "sidePanel", "webRequest", "webNavigation", "alarms",
-    "notifications", "audioCapture", "offscreen", "debugger"
+    "notifications", "offscreen", "debugger"
   ],
   "host_permissions": [
     "<all_urls>",

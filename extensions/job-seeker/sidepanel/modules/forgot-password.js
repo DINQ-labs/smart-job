@@ -109,7 +109,7 @@
 
   function bodyDone() {
     return `
-      <div class="fp-done-ico" aria-hidden="true">✅</div>
+      <div class="fp-done-ico" aria-hidden="true">OK</div>
       <p class="fp-lead">${t('forgot.doneStep.lead')}</p>
       <div class="fp-msg" id="fpMsg"></div>
       <button class="btn primary fp-submit" id="fpGoLogin" type="button">${t('forgot.doneStep.loginBtn')}</button>
@@ -126,7 +126,7 @@
     mask.innerHTML = `
       <article class="fp-card" role="dialog" aria-modal="true" aria-label="${t('forgot.ariaLabel')}">
         <header class="fp-head">
-          <span class="fp-head-ico" aria-hidden="true">🔑</span>
+          <span class="fp-head-ico" aria-hidden="true">ID</span>
           <span class="fp-head-title">${escapeText(titles[step])}</span>
           <button class="fp-close" id="fpClose" type="button" aria-label="${t('forgot.closeAriaLabel')}">✕</button>
         </header>

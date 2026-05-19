@@ -8,10 +8,10 @@
  * < > arrow + 居中 1/4 counter + slate-900 大 CTA + 免费开始无需信用卡 footer.
  *
  * 4 张卡片内容来自用户提供的截图:
- *   1 · AI 智能对话助手   💬
- *   2 · 批量任务自动化   📋
+ *   1 · AI 智能对话助手
+ *   2 · 批量任务自动化
  *   3 · 收藏与跟踪管理   ⭐
- *   4 · 支持三大招聘平台 🚀  (含 Boss/LinkedIn/Indeed 三色 chip)
+ *   4 · 支持三大招聘平台  (含 Boss/LinkedIn/Indeed 三色 chip)
  */
 (function () {
   'use strict';
@@ -20,7 +20,7 @@
   function getSlides() {
     return [
       {
-        icon: '💬',
+        icon: 'AI',
         title: t('welcome.slide1.title'),
         lines: [
           t('welcome.slide1.line1'),
@@ -29,7 +29,7 @@
         ],
       },
       {
-        icon: '📋',
+        icon: 'TK',
         title: t('welcome.slide2.title'),
         lines: [
           t('welcome.slide2.line1'),
@@ -38,7 +38,7 @@
         ],
       },
       {
-        icon: '⭐',
+        icon: 'SV',
         title: t('welcome.slide3.title'),
         lines: [
           t('welcome.slide3.line1'),
@@ -47,7 +47,7 @@
         ],
       },
       {
-        icon: '🚀',
+        icon: 'PL',
         title: t('welcome.slide4.title'),
         lines: [
           t('welcome.slide4.line1'),
@@ -88,7 +88,7 @@
     mask.innerHTML = `
       <article class="wc-card" role="dialog" aria-label="${t('welcome.ariaLabel')}">
         <header class="wc-hood">
-          <div class="wc-bot" aria-hidden="true">🤖</div>
+          <div class="wc-bot" aria-hidden="true">AI</div>
           <div class="wc-brand">${t('welcome.brand')}</div>
           <div class="wc-brand-en">AI-powered Recruitment Assistant</div>
         </header>

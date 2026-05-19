@@ -76,7 +76,7 @@
   function statusChip(status) {
     const map = {
       pending:            { cls: 'chip',            label: t('taskDetail.status.pending'),   icon: '⌛' },
-      running:            { cls: 'chip chip-green', label: t('taskDetail.status.running'),   icon: '⚡' },
+      running:            { cls: 'chip chip-green', label: t('taskDetail.status.running'),   icon: 'RN' },
       paused_user_action: { cls: 'chip chip-amber', label: t('taskDetail.status.paused'),    icon: '⏸' },
       completed:          { cls: 'chip chip-blue',  label: t('taskDetail.status.completed'), icon: '✓' },
       failed:             { cls: 'chip chip-red',   label: t('taskDetail.status.failed'),    icon: '✕' },
@@ -168,7 +168,7 @@
           ${rawDur ? `<span>${t('taskDetail.meta.duration', { dur: escapeText(rawDur) })}</span>` : ''}
           <span class="td-meta-id">#${escapeText(String(task.id))}</span>
         </div>
-        ${task.error ? `<div class="td-error">⚠ ${escapeText(task.error)}</div>` : ''}`;
+        ${task.error ? `<div class="td-error"> ${escapeText(task.error)}</div>` : ''}`;
     }
 
     // 跳过 tab:仅 skipped > 0 显示
@@ -258,7 +258,7 @@
 
     const headerHtml = `
       <div class="td-result-head">
-        <div class="td-result-q">🎯 ${headParts}</div>
+        <div class="td-result-q">${headParts}</div>
         <div class="td-result-stats">
           ${compared ? `<span>${t('taskDetail.result.compared')}<b>${compared}</b></span>` : ''}
           ${jobs.length ? `<span>${t('taskDetail.result.topN')}<b>${jobs.length}</b></span>` : ''}
@@ -312,7 +312,7 @@
 
     const headerHtml = `
       <div class="td-result-head">
-        <div class="td-result-q">👥 ${escapeText(inputs.job_keyword || '')}</div>
+        <div class="td-result-q">${escapeText(inputs.job_keyword || '')}</div>
         <div class="td-result-stats">
           <span>${t('taskDetail.result.contacted')}<b>${contacted.length}</b></span>
           ${skipped > 0 ? `<span class="td-stat-skip">${t('taskDetail.result.skipped', { n: skipped })}</span>` : ''}
@@ -356,7 +356,7 @@
 
     const headerHtml = `
       <div class="td-result-head">
-        <div class="td-result-q">📥 ${escapeText(platformText)} inbox</div>
+        <div class="td-result-q">${escapeText(platformText)} inbox</div>
         <div class="td-result-stats">
           ${typeof jobsScanned === 'number' ? `<span>${t('taskDetail.result.jobsScanned')}<b>${jobsScanned}</b>${t('taskDetail.result.jobsScannedSuffix')}</span>` : ''}
           ${typeof jobsWithPending === 'number' ? `<span>${t('taskDetail.result.pending')}<b>${jobsWithPending}</b></span>` : ''}

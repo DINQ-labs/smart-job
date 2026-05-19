@@ -58,23 +58,23 @@
         <button class="js-close-btn" id="jsCloseBtn" title="${t('jobseeker.actionBarClose')}">✕</button>
         <div style="flex:1"></div>
         <button class="js-action-btn" data-action="browse" title="${t('jobseeker.actionBrowseTitle')}">
-          <span class="js-action-ico">🔍</span>
+          <span class="js-action-ico">SR</span>
           <span class="js-action-label">${t('jobseeker.actionBrowse')}</span>
         </button>
         <button class="js-action-btn" data-action="analyze" title="${t('jobseeker.actionAnalyzeTitle')}">
-          <span class="js-action-ico">🤖</span>
+          <span class="js-action-ico">AI</span>
           <span class="js-action-label">${t('jobseeker.actionAnalyze')}</span>
         </button>
         <button class="js-action-btn" data-action="apply" title="${t('jobseeker.actionApplyTitle')}">
-          <span class="js-action-ico">📤</span>
+          <span class="js-action-ico">UP</span>
           <span class="js-action-label">${t('jobseeker.actionApply')}</span>
         </button>
         <button class="js-action-btn" data-action="bookmark" title="${t('jobseeker.actionBookmarkTitle')}">
-          <span class="js-action-ico">⭐</span>
+          <span class="js-action-ico">SV</span>
           <span class="js-action-label">${t('jobseeker.actionBookmark')}</span>
         </button>
         <button class="js-action-btn" data-action="batch" title="${t('jobseeker.actionBatchTitle')}">
-          <span class="js-action-ico">📋</span>
+          <span class="js-action-ico">TK</span>
           <span class="js-action-label">${t('jobseeker.actionBatchLabel')}</span>
         </button>
       </div>
@@ -91,7 +91,7 @@
         <div class="js-card" id="jsResumeCard">
           <div class="js-card-header">
             <div class="js-card-title-row">
-              <span class="js-card-ico">📄</span>
+              <span class="js-card-ico">CV</span>
               <span class="js-card-title">${t('jobseeker.resumeTitle')}</span>
               <span class="js-card-badge js-card-badge-empty">${t('jobseeker.resumeNotUploaded')}</span>
             </div>
@@ -100,7 +100,7 @@
             <div class="js-upload-area" id="jsUploadArea">
               <input type="file" id="jsResumeInput" accept=".pdf,.doc,.docx" hidden>
               <div class="js-upload-placeholder">
-                <span class="js-upload-ico">📎</span>
+                <span class="js-upload-ico">UP</span>
                 <div class="js-upload-text">${t('jobseeker.uploadClick')}</div>
                 <div class="js-upload-hint">${t('jobseeker.uploadHint')}</div>
               </div>
@@ -117,7 +117,7 @@
       <div class="js-card" id="jsResumeCard">
         <div class="js-card-header" data-card="resume">
           <div class="js-card-title-row">
-            <span class="js-card-ico">📄</span>
+            <span class="js-card-ico">CV</span>
             <span class="js-card-title">${t('jobseeker.resumeTitle')}</span>
             <span class="js-card-badge js-card-badge-success">${t('jobseeker.resumeUploaded')}</span>
           </div>
@@ -126,7 +126,7 @@
         ${isExpanded ? `
           <div class="js-card-body">
             <div class="js-resume-file">
-              <span class="js-resume-ico">📄</span>
+              <span class="js-resume-ico">CV</span>
               <div class="js-resume-info">
                 <div class="js-resume-name">${escapeText(state.resumeFileName)}</div>
                 <div class="js-resume-date">${formatDate(state.resumeUploadedAt)}</div>
@@ -156,7 +156,7 @@
         <div class="js-card" id="jsPrefsCard">
           <div class="js-card-header">
             <div class="js-card-title-row">
-              <span class="js-card-ico">🎯</span>
+              <span class="js-card-ico">GO</span>
               <span class="js-card-title">${t('jobseeker.prefsTitle')}</span>
               <span class="js-card-badge js-card-badge-empty">${t('jobseeker.prefsNotSet')}</span>
             </div>
@@ -174,7 +174,7 @@
       <div class="js-card" id="jsPrefsCard">
         <div class="js-card-header" data-card="preferences">
           <div class="js-card-title-row">
-            <span class="js-card-ico">🎯</span>
+            <span class="js-card-ico">GO</span>
             <span class="js-card-title">${t('jobseeker.prefsTitle')}</span>
             <span class="js-card-badge js-card-badge-success">${t('jobseeker.prefsSet')}</span>
           </div>
@@ -308,7 +308,7 @@
       return `
         <div class="js-main-content">
           <div class="js-empty-state">
-            <span class="js-empty-ico">📋</span>
+            <span class="js-empty-ico">TK</span>
             <div class="js-empty-title">${t('jobseeker.emptyTitle')}</div>
             <div class="js-empty-desc">
               ${t('jobseeker.emptyDesc', { missing: missing.join('、') })}
@@ -327,7 +327,7 @@
         </div>
         <div class="js-job-list" id="jsJobList">
           <div class="js-empty-state">
-            <span class="js-empty-ico">🔍</span>
+            <span class="js-empty-ico">SR</span>
             <div class="js-empty-title">${t('jobseeker.aiAnalyzing')}</div>
             <div class="js-empty-desc">
               ${t('jobseeker.aiAnalyzingDesc')}

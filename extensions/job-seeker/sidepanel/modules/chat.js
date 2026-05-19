@@ -9,7 +9,7 @@
  * 不做(留 Phase 6 +):语音输入(voice-bridge)、结构化卡片(analysis-card)、
  *                  历史会话回放(history)、模板触发的 task_confirm 卡(tc-* 类)
  *
- * v3 类:.chat / .chat-row / .chat-bubble / .chat-ai-ico / .chat-input-box
+ * v3 类:.chat / .chat-row / .chat-bubble / .chat-input-box
  */
 (function () {
   'use strict';
@@ -38,12 +38,40 @@
     const row = document.createElement('div');
     row.className = 'chat-row from-ai';
     row.innerHTML = `
-      <div class="chat-ai-ico" aria-hidden="true">AI</div>
       <div class="chat-bubble"></div>`;
     row.querySelector('.chat-bubble').textContent = initial;
     stream.appendChild(row);
     stream.scrollTop = stream.scrollHeight;
     return row.querySelector('.chat-bubble');
+  }
+
+  function appendAiBlock(title, bodyHtml, actions) {
+    if (!stream) return;
+    const row = document.createElement('div');
+    row.className = 'chat-row from-ai chat-row-block';
+    const actionHtml = Array.isArray(actions) && actions.length
+      ? `<div class="ai-block-actions">${actions.map((a) =>
+          `<button type="button" class="chip" data-prompt="${escapeHtml(a.prompt || a.label || '')}">${escapeHtml(a.label || '')}</button>`
+        ).join('')}</div>`
+      : '';
+    row.innerHTML = `
+      <section class="ai-block">
+        <div class="ai-block-kicker">SmartJob AI</div>
+        <h2 class="ai-block-title">${escapeHtml(title || '')}</h2>
+        <div class="ai-block-body">${bodyHtml || ''}</div>
+        ${actionHtml}
+      </section>`;
+    row.querySelectorAll('[data-prompt]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (input) {
+          input.value = btn.dataset.prompt || '';
+          input.focus();
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
+    });
+    stream.appendChild(row);
+    stream.scrollTop = stream.scrollHeight;
   }
 
   function appendInsufficientCreditCard(detail) {
@@ -53,8 +81,7 @@
     const required = detail?.required || '?';
     const available = detail?.available ?? 0;
     row.innerHTML = `
-      <div class="chat-ai-ico" aria-hidden="true">AI</div>
-      <div class="task-alert" style="max-width:86%">
+      <div class="task-alert chat-task-alert">
         <div class="task-alert-head">${t('chat.credit.title')}</div>
         <div>${t('chat.credit.body', { required, available })}</div>
         <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-2)">
@@ -163,6 +190,7 @@
     const needSel = actions.some((a) => a.require_selection);
 
     const head = t('chat.listCard.head', { scanned: card.scanned || items.length, matched: card.matched || 0 });
+    const entityLabel = isJob ? t('chat.listCard.entityJob') : t('chat.listCard.entityCandidate');
     const itemsHtml = items.map((it) => {
       const mp = it.match_percent;
       const badge = (typeof mp === 'number')
@@ -179,10 +207,10 @@
       }
       return `
         <label class="dq-card-item">
-          ${needSel ? `<input type="checkbox" value="${escapeHtml(String(it.index))}">` : ''}
-          <span class="dq-card-idx">${escapeHtml(String(it.index))}</span>
+          ${needSel ? `<input class="dq-card-check" type="checkbox" value="${escapeHtml(String(it.index))}">` : ''}
           <div class="dq-card-main">
             <div class="dq-card-title">
+              <span class="dq-card-idx">${escapeHtml(String(it.index))}</span>
               <span class="dq-card-name">${escapeHtml(title)}</span>${badge}
             </div>
             ${sub ? `<div class="dq-card-sub">${escapeHtml(sub)}</div>` : ''}
@@ -206,9 +234,11 @@
     const row = document.createElement('div');
     row.className = 'chat-row from-ai';
     row.innerHTML = `
-      <div class="chat-ai-ico" aria-hidden="true">AI</div>
       <div class="dq-card">
-        <div class="dq-card-head">${escapeHtml(head)}</div>
+        <div class="dq-card-head">
+          <span>${escapeHtml(entityLabel)}</span>
+          <span>${escapeHtml(head)}</span>
+        </div>
         ${selAllHtml}
         <div class="dq-card-list">${itemsHtml}</div>
         ${actionsHtml}
@@ -232,6 +262,11 @@
     }
 
     if (selAll) {
+      const syncCheckedRows = () => {
+        itemBoxes.forEach((c) => {
+          c.closest('.dq-card-item')?.classList.toggle('is-selected', c.checked);
+        });
+      };
       const syncSelAll = () => {
         const n = itemBoxes.filter((c) => c.checked).length;
         selAll.checked = n > 0 && n === itemBoxes.length;
@@ -240,9 +275,11 @@
       selAll.addEventListener('change', () => {
         itemBoxes.forEach((c) => { c.checked = selAll.checked; });
         selAll.indeterminate = false;
+        syncCheckedRows();
         updateActionStates();
       });
       itemBoxes.forEach((c) => c.addEventListener('change', () => {
+        syncCheckedRows();
         syncSelAll();
         updateActionStates();
       }));
@@ -460,24 +497,21 @@
       ? `${t('chat.greet.bgKnown')}<b>${parts.join(' · ')}</b>`
       : t('chat.greet.bgUnknown');
 
-    const lines = [
-      t('chat.greet.hello'),
-      bgLine,
-      t('chat.greet.canHelp'),
-      t('chat.greet.analyze'),
-      t('chat.greet.optimize'),
-      t('chat.greet.batch'),
-      t('chat.greet.draft'),
-      t('chat.greet.browse', { platform: escapeHtml(platLabel) }),
-    ];
-
-    const row = document.createElement('div');
-    row.className = 'chat-row from-ai';
-    row.innerHTML = `
-      <div class="chat-ai-ico" aria-hidden="true">AI</div>
-      <div class="chat-bubble">${lines.join('<br>')}</div>`;
-    stream.appendChild(row);
-    stream.scrollTop = stream.scrollHeight;
+    const body = `
+      <p>${bgLine}</p>
+      <p>${t('chat.greet.browse', { platform: escapeHtml(platLabel) })}</p>
+      <div class="ai-block-section">${t('chat.greet.canHelp')}</div>
+      <ul>
+        <li>${t('chat.greet.analyze')}</li>
+        <li>${t('chat.greet.optimize')}</li>
+        <li>${t('chat.greet.batch')}</li>
+        <li>${t('chat.greet.draft')}</li>
+      </ul>`;
+    appendAiBlock(t('chat.greet.hello'), body, [
+      { label: '总结当前岗位', prompt: '总结当前岗位' },
+      { label: '评估匹配度', prompt: '评估当前职位与我的匹配度' },
+      { label: '生成招呼语', prompt: '帮我生成一段打招呼消息' },
+    ]);
     greeted = true;
   }
 
@@ -540,7 +574,6 @@
     const row = document.createElement('div');
     row.className = 'chat-row from-ai';
     row.innerHTML = `
-      <div class="chat-ai-ico" aria-hidden="true">AI</div>
       <div class="chat-bubble">${lines.join('<br>')}</div>`;
     stream.appendChild(row);
     stream.scrollTop = stream.scrollHeight;

@@ -11,9 +11,9 @@
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* ── 字重(无 regular,见 DESIGN.md §2.3)─────────── */
-  --fw-normal: 600;
-  --fw-medium: 700;
-  --fw-bold:   800;
+  --fw-normal: 500;
+  --fw-medium: 650;
+  --fw-bold:   750;
 
   /* ── 字号 scale ─────────────────────────────────── */
   --text-micro:  10px;
@@ -49,9 +49,12 @@
   --slate-200: #e2e8f0;
   --slate-100: #f1f5f9;
   --slate-50:  #f8fafc;
-  --gray-50:   #fafafa;
-  --surface-2: #e8ecf0;
+  --gray-50:   #fbfbfa;
+  --surface-2: #eeeeec;
   --white:     #ffffff;
+  --notion-bg: #f7f7f5;
+  --notion-line: #e6e6e3;
+  --notion-hover: #f1f1ef;
 
   /* ── 语义色(每个 50/200/600 三档)─────────────── */
   --blue-50:   #eff6ff;
@@ -106,20 +109,20 @@
 
   /* ── 阴影 shadow ────────────────────────────────── */
   --shadow-line:  0 1px 0 rgba(255,255,255,0.06);
-  --shadow-card:  0 8px 32px rgba(15,23,42,0.12);
-  --shadow-modal: 0 4px 16px rgba(15,23,42,0.20);
+  --shadow-card:  0 1px 2px rgba(15,23,42,0.06);
+  --shadow-modal: 0 8px 24px rgba(15,23,42,0.14);
 
   /* ── 语义别名(给业务层用,屏蔽底层 token)──────── */
-  --bg:           var(--gray-50);
+  --bg:           var(--notion-bg);
   --surface:      var(--white);
-  --surface-alt:  var(--slate-50);
+  --surface-alt:  var(--gray-50);
   --ink:          var(--slate-900);
   --ink-2:        var(--slate-700);
   --muted:        var(--slate-500);
   --muted-2:      var(--slate-400);
-  --border:       var(--slate-300);
-  --border-soft:  var(--slate-200);
-  --accent:       var(--blue-600);
+  --border:       var(--notion-line);
+  --border-soft:  var(--notion-line);
+  --accent:       var(--slate-900);
   --accent-bg:    var(--blue-50);
   --accent-border:var(--blue-200);
   --success:      var(--green-600);
