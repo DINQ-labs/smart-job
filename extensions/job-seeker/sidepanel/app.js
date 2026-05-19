@@ -44,14 +44,20 @@
   window.DQ.config = window.DQ.config || {};
   Object.assign(window.DQ.config, { role: state.role, platform: state.platform });
 
+  const PLATFORM_LABELS = { boss: 'Boss', linkedin: 'LinkedIn', indeed: 'Indeed' };
+
   // ── DOM 引用 ──────────────────────────────────────────────
   const $ = (id) => document.getElementById(id);
   const els = {
-    headerHome:          $('headerHome'),
     headerSettings:      $('headerSettings'),
     headerMode:          $('headerMode'),
     headerModeLabel:     $('headerModeLabel'),
     headerModeDot:       $('headerModeDot'),
+
+    contextWorkspace:    $('contextWorkspace'),
+    cwTitle:             $('cwTitle'),
+    cwSub:               $('cwSub'),
+    cwActions:           $('cwActions'),
 
     ctxBar:        $('ctxBar'),
     ctxResume:     $('ctxResume'), ctxResumeText: $('ctxResumeText'),
@@ -89,18 +95,7 @@
     if (btn) switchTab(btn.dataset.tab);
   });
 
-  // ── 顶栏品牌区「🏠 首页」→ 回首页 ──────────────────────────
-  // 已登录回 AI助手 tab;未登录回登录页。整个扩展任意位置都能随时回首页。
-  function goHome() {
-    if (state.user.loggedIn) {
-      switchTab('chat');
-    } else {
-      try { window.DQ.onboarding?.openLogin?.(); } catch (_) {}
-    }
-  }
-  els.headerHome?.addEventListener('click', goHome);
-
-  // ── 顶栏「⚙️ 设置」→ 打开扩展设置页(配置 portal / api-gw / agent-gw 网关)──
+  // ── 顶栏「设置」→ 打开扩展设置页(配置 portal / api-gw / agent-gw 网关)──
   // 任意位置(含登录前)都能改网关地址 —— 网关配错会导致登录失败,故须常驻可达。
   function openSettings() {
     try { chrome.runtime.openOptionsPage(); } catch (_) {}
@@ -108,9 +103,9 @@
   els.headerSettings?.addEventListener('click', openSettings);
 
   // ── 顶栏身份 pill → 角色 / 平台切换 ────────────────────────
-  // 「Boss · 求职」胶囊显示当前平台 · 角色,点它即开切换向导(onboarding 监听)。
+  // 「Boss · 求职」胶囊显示当前平台 · 角色,点它打开轻量选择弹窗。
   function openRoleSwitcher() {
-    window.dispatchEvent(new CustomEvent('dq:open-role-switcher'));
+    openModeModal();
   }
   els.headerMode?.addEventListener('click', openRoleSwitcher);
   els.headerMode?.addEventListener('keydown', (e) => {
@@ -128,7 +123,7 @@
   }
 
   // 暴露给外部调用
-  window.DQ.app = { switchTab, renderHeader, renderContext, renderLoginGate, showJobSeekerWorkspace };
+  window.DQ.app = { switchTab, renderHeader, renderContext, renderLoginGate, renderContextWorkspace, showJobSeekerWorkspace };
 
   // 注意:求职者工作台不再随角色变化自动弹出。求职引导(onboarding Step 5a/5b/5c)
   // 已接管简历/偏好采集,引导结束直接落到 AI 对话 tab。工作台仅经
@@ -139,10 +134,151 @@
     // 顶栏身份 pill = 平台 · 角色;在线状态用绿点表示。
     // credit / 通知 已移入「我的」tab(profile.js),顶栏不再展示。
     const p = state.platformsStatus[state.platform] || { online: false };
-    const platLabel = ({ boss: 'Boss', linkedin: 'LinkedIn', indeed: 'Indeed' })[state.platform] || t('app.platUnknown');
+    const platLabel = PLATFORM_LABELS[state.platform] || t('app.platUnknown');
     const roleLabel = state.role === 'recruiter' ? t('app.roleRecruiter') : t('app.roleJobseeker');
     if (els.headerModeLabel) els.headerModeLabel.textContent = `${platLabel} · ${roleLabel}`;
     if (els.headerModeDot) els.headerModeDot.classList.toggle('online', !!p.online);
+  }
+
+  function roleLabelFor(role) {
+    return role === 'recruiter' ? t('app.roleRecruiter') : t('app.roleJobseeker');
+  }
+
+  function closeModeModal() {
+    document.getElementById('modeSwitchMask')?.remove();
+  }
+
+  function isModeSupported(platform, role) {
+    return (platform || 'boss') === 'boss' && (role || 'jobseeker') === 'jobseeker';
+  }
+
+  function showModeComingSoon(platform, role) {
+    const platLabel = PLATFORM_LABELS[platform] || platform || 'SmartJob';
+    alert(`${platLabel} · ${roleLabelFor(role)} 即将上线`);
+  }
+
+  function renderOptionGroup(items, active, attr) {
+    return items.map((item) => `
+      <button type="button" class="mode-option ${item.value === active ? 'selected' : ''}"
+              data-${attr}="${item.value}">
+        <span class="mode-option-title">${item.label}</span>
+        ${item.sub ? `<span class="mode-option-sub">${item.sub}</span>` : ''}
+      </button>
+    `).join('');
+  }
+
+  function openModeModal() {
+    closeModeModal();
+    const currentPlatform = state.platform || 'boss';
+    const currentRole = state.role || 'jobseeker';
+    let draftPlatform = currentPlatform;
+    let draftRole = currentRole;
+    const mask = document.createElement('div');
+    mask.className = 'mode-switch-mask';
+    mask.id = 'modeSwitchMask';
+    mask.innerHTML = `
+      <div class="mode-switch-card" role="dialog" aria-modal="true" aria-labelledby="modeSwitchTitle">
+        <div class="mode-switch-head">
+          <div>
+            <div class="mode-switch-kicker">SmartJob</div>
+            <h2 class="mode-switch-title" id="modeSwitchTitle">切换工作模式</h2>
+          </div>
+          <button type="button" class="mode-switch-close" aria-label="关闭">✕</button>
+        </div>
+        <div class="mode-switch-section">
+          <div class="mode-switch-label">平台</div>
+          <div class="mode-options" data-group="platform">
+            ${renderOptionGroup([
+              { value: 'boss', label: 'Boss' },
+              { value: 'linkedin', label: 'LinkedIn' },
+              { value: 'indeed', label: 'Indeed' },
+            ], draftPlatform, 'platform')}
+          </div>
+        </div>
+        <div class="mode-switch-section">
+          <div class="mode-switch-label">模式</div>
+          <div class="mode-options" data-group="role">
+            ${renderOptionGroup([
+              { value: 'jobseeker', label: t('app.roleJobseeker'), sub: '找工作' },
+              { value: 'recruiter', label: t('app.roleRecruiter'), sub: '找候选人' },
+            ], draftRole, 'role')}
+          </div>
+        </div>
+        <div class="mode-switch-current">当前：${PLATFORM_LABELS[state.platform] || state.platform} · ${roleLabelFor(state.role)}</div>
+        <div class="mode-switch-actions">
+          <button type="button" class="btn ghost" data-action="cancel">取消</button>
+          <button type="button" class="btn primary" data-action="save" disabled>确定</button>
+        </div>
+      </div>
+    `;
+
+    const syncSaveState = () => {
+      const saveBtn = mask.querySelector('[data-action="save"]');
+      if (!saveBtn) return;
+      saveBtn.disabled = draftPlatform === currentPlatform && draftRole === currentRole;
+    };
+
+    const syncSelected = (group, value) => {
+      mask.querySelectorAll(`.mode-options[data-group="${group}"] .mode-option`).forEach((btn) => {
+        btn.classList.toggle('selected', btn.dataset[group] === value);
+      });
+      syncSaveState();
+    };
+
+    mask.addEventListener('click', async (e) => {
+      if (e.target === mask || e.target.closest('.mode-switch-close') || e.target.closest('[data-action="cancel"]')) {
+        closeModeModal();
+        return;
+      }
+      const platformBtn = e.target.closest('[data-platform]');
+      if (platformBtn) {
+        draftPlatform = platformBtn.dataset.platform || draftPlatform;
+        syncSelected('platform', draftPlatform);
+        return;
+      }
+      const roleBtn = e.target.closest('[data-role]');
+      if (roleBtn) {
+        draftRole = roleBtn.dataset.role || draftRole;
+        syncSelected('role', draftRole);
+        return;
+      }
+      const saveBtn = e.target.closest('[data-action="save"]');
+      if (saveBtn && !saveBtn.disabled) {
+        if (!isModeSupported(draftPlatform, draftRole)) {
+          showModeComingSoon(draftPlatform, draftRole);
+          return;
+        }
+        await applyModeSelection(draftPlatform, draftRole);
+        closeModeModal();
+        window.dispatchEvent(new CustomEvent('dq:open-platform-check', {
+          detail: { platform: draftPlatform, role: draftRole },
+        }));
+      }
+    });
+    mask.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModeModal();
+    });
+    document.body.appendChild(mask);
+    mask.querySelector('.mode-switch-close')?.focus();
+  }
+
+  async function applyModeSelection(platform, role) {
+    const oldRole = state.role;
+    const oldPlatform = state.platform;
+    state.platform = platform || 'boss';
+    state.role = role || 'jobseeker';
+    window.DQ.config.role = state.role;
+    window.DQ.config.platform = state.platform;
+    document.body.dataset.role = state.role;
+    try {
+      const r = await chrome.storage.local.get(['user']);
+      const u = (r && r.user) || {};
+      await chrome.storage.local.set({ user: { ...u, role: state.role, platform: state.platform } });
+    } catch (_) {}
+    renderHeader();
+    renderContextWorkspace();
+    if (oldRole !== state.role) emit(NAMES.ROLE_CHANGED, { role: state.role });
+    if (oldPlatform !== state.platform) emit(NAMES.PLATFORM_CHANGED, { platform: state.platform });
   }
 
   function renderContext() {
@@ -161,14 +297,51 @@
       els.ctxPage.hidden = false;
       els.ctxPageText.textContent = state.pageContext.title;
       els.ctxPageIcon.textContent = ({
-        list: '📑', detail: '📌', chat: '💬', off_platform: '🌐', other: '🗒',
-      })[state.pageContext.page_type] || '📌';
+        list: 'LS', detail: 'JD', chat: 'CH', off_platform: 'WEB', other: 'PG',
+      })[state.pageContext.page_type] || 'PG';
     } else {
       els.ctxPage.hidden = true;
     }
     // 三行都隐藏时收起整条 ctx-bar,避免留一条空白条
     const anyRow = !els.ctxResume.hidden || !els.ctxPrefs.hidden || !els.ctxPage.hidden;
     els.ctxBar.hidden = !anyRow;
+  }
+
+  function contextTitleFor(type) {
+    return ({
+      list: t('cw.listTitle'),
+      detail: t('cw.detailTitle'),
+      chat: t('cw.chatTitle'),
+      off_platform: t('cw.offPlatformTitle'),
+      other: t('cw.otherTitle'),
+    })[type] || t('cw.emptyTitle');
+  }
+
+  function renderContextWorkspace() {
+    if (!els.contextWorkspace) return;
+    const ctx = state.pageContext || {};
+    const type = ctx.page_type || '';
+    const hasContext = !!(type || ctx.title || ctx.url);
+    const title = hasContext
+      ? (ctx.title || contextTitleFor(type))
+      : t('cw.emptyTitle');
+    let sub = t('cw.emptySub');
+    if (hasContext) {
+      if (type === 'off_platform') {
+        sub = t('cw.offPlatformSub');
+      } else {
+        const kind = contextTitleFor(type);
+        const count = ctx.page_item_count ? ` · ${t('cw.itemCount', { n: ctx.page_item_count })}` : '';
+        sub = `${kind}${count}`;
+      }
+    }
+    if (els.cwTitle) els.cwTitle.textContent = title;
+    if (els.cwSub) els.cwSub.textContent = sub;
+    const onPlatform = hasContext && type !== 'off_platform';
+    els.contextWorkspace.classList.toggle('is-empty', !onPlatform);
+    els.cwActions?.querySelectorAll('button').forEach((btn) => {
+      btn.disabled = !onPlatform;
+    });
   }
 
   function renderLoginGate() {
@@ -274,6 +447,7 @@
       page_item_count: Number(ctx.page_item_count || 0) || 0,
     };
     renderContext();
+    renderContextWorkspace();
     emit(NAMES.PAGE_CONTEXT_CHANGED, state.pageContext);
   }
 
@@ -374,6 +548,13 @@
     window.DQ.forgotPassword?.open();
   });
 
+  els.cwActions?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-cw-prompt]');
+    if (!btn || btn.disabled) return;
+    switchTab('chat');
+    window.DQ.chat?.prefill?.(btn.dataset.cwPrompt || '');
+  });
+
   // ── 启动序列 ──────────────────────────────────────────────
   (async function init() {
     // 确保语言在首屏渲染前已从 storage 读出
@@ -381,7 +562,7 @@
       await window.DQI18N.ready;
     }
     await loadUserPrefs();
-    renderHeader(); renderContext(); renderLoginGate();
+    renderHeader(); renderContext(); renderContextWorkspace(); renderLoginGate();
     setupRuntimeListener();
 
     // 冷启动:若上次连接被踢出且尚未恢复,恢复提示横幅
