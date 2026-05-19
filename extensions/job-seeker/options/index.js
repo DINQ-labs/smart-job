@@ -46,6 +46,8 @@
   };
 
   const norm = (s) => (s || '').trim().replace(/\/+$/, '');
+  let lastConnOnline = null;
+  let connOfflineTimer = null;
 
   // ── 老安装迁移：没存过显式 URL 时，按旧的 gatewayHost 推导一次 ─────────
   function isLocal(host) { return /^(127\.0\.0\.1|localhost)/.test(host); }
@@ -104,6 +106,16 @@
       return;
     }
     const online = !!st.connected;
+    if (!online && lastConnOnline === true) {
+      clearTimeout(connOfflineTimer);
+      connOfflineTimer = setTimeout(() => {
+        lastConnOnline = false;
+        renderConnStatus();
+      }, 1200);
+      return;
+    }
+    clearTimeout(connOfflineTimer);
+    lastConnOnline = online;
     els.connDot.className = 'health-dot ' + (online ? 'up' : 'down');
     els.connText.textContent = t(online ? 'options.conn.online' : 'options.conn.offline');
     const bits = [];

@@ -410,7 +410,8 @@ async function connect() {
     ws.onopen = () => {
       console.log('[boss-api-ext] 已连接网关:', GATEWAY_WS_URL);
       reconnectAttempt = 0; // 重置退避计数
-      notifyPopup({ type: 'connectionState', connected: true });
+      currentSessionId = '';
+      notifyPopup({ type: 'connectionState', connected: true, phase: 'registering' });
       startHeartbeat();
     };
 
@@ -418,7 +419,8 @@ async function connect() {
       console.log('[boss-api-ext] 网关连接断开');
       ws = null;
       stopHeartbeat();
-      notifyPopup({ type: 'connectionState', connected: false, sessionId: currentSessionId });
+      currentSessionId = '';
+      notifyPopup({ type: 'connectionState', connected: false });
       if (autoReconnect) {
         const delay = getReconnectDelay();
         console.log(`[boss-api-ext] ${delay.toFixed(0)}ms 后重连（第 ${reconnectAttempt} 次）`);
@@ -554,6 +556,7 @@ async function handleGatewayMessage(rawData) {
       }
     }
     notifyPopup({ type: 'registered', browserId: msg.browserId, sessionId: currentSessionId, proxyUrl: msg.proxyUrl || '', appUserId: msg.appUserId || '' });
+    notifyPopup({ type: 'connectionState', connected: true, sessionId: currentSessionId });
     // 持久化 sessionId
     if (currentSessionId) {
       chrome.storage.local.set({ sessionId: currentSessionId, browserId: msg.browserId })
