@@ -567,8 +567,10 @@
   border: 1px solid var(--border-soft);
   border-radius: var(--rd-md);
   font-size: var(--text-sm); line-height: var(--leading-snug);
+  overflow-y: hidden;
   resize: none;
 }
+.chat-input-box textarea::-webkit-scrollbar { display: none; }
 .chat-input-box textarea:focus {
   outline: none; border-color: var(--accent);
   background: var(--white);
@@ -1105,6 +1107,7 @@
 }
 .ob-mask.open { display: flex; }
 .ob-card {
+  position: relative;
   width: 100%; height: 100%; min-height: 0;
   background: var(--surface);
   border: 1px solid var(--border-soft);
@@ -1113,6 +1116,28 @@
   overflow: hidden;
   display: flex; flex-direction: column;
 }
+.ob-lang {
+  position: absolute;
+  top: var(--sp-3);
+  right: var(--sp-4);
+  z-index: 2;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 var(--sp-1\.5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--rd-md);
+  color: var(--ink-2);
+  font-size: var(--text-tiny);
+  font-weight: var(--fw-medium);
+  line-height: 1;
+  cursor: pointer;
+}
+.ob-lang:hover { background: var(--notion-hover); border-color: var(--slate-300); }
+.ob-lang:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 /* 引导顶栏:浅色工作区风格 */
 .ob-hood {
   background: var(--surface);
@@ -1164,6 +1189,7 @@
   display: flex; gap: var(--sp-1\.5);
   padding: var(--sp-3) var(--sp-4) var(--sp-2);
 }
+.ob-back + .ob-progress-bar { padding-top: var(--sp-2); }
 .ob-progress-seg {
   flex: 1; height: 3px; border-radius: var(--rd-full);
   background: var(--surface-2);
@@ -1174,8 +1200,13 @@
 
 .ob-back {
   align-self: flex-start;
-  padding: var(--sp-1) var(--sp-3) 0;
+  margin: var(--sp-3) var(--sp-4) 0;
+  padding: 0;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
   font-size: var(--text-xs);
+  line-height: var(--leading-snug);
   color: var(--muted);
   background: transparent;
 }
@@ -1253,7 +1284,13 @@
   border-color: var(--slate-900);
   color: var(--white);
 }
-/* 平台 brand 圆点(在 ob-option-ico 内,大色块)*/
+/* 平台真实 logo(在 ob-option-ico 内)*/
+.ob-platform-logo {
+  width: 24px;
+  height: 24px;
+  display: block;
+  object-fit: contain;
+}
 .ob-platform-dot {
   width: 20px; height: 20px;
   border-radius: var(--rd-full);

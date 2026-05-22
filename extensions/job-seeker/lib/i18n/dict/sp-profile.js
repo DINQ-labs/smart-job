@@ -46,6 +46,9 @@
       'onboarding.step1.footerHint': '点击即跳转,无需确认按钮',
 
       // step 2
+      'onboarding.platform.boss': 'Boss 直聘',
+      'onboarding.platform.linkedin': 'LinkedIn',
+      'onboarding.platform.indeed': 'Indeed',
       'onboarding.step2.title': '你主要在哪个平台?',
       'onboarding.step2.descDetected': '检测到你当前在 {platform}',
       'onboarding.step2.descDefault': '请选择一个常用平台',
@@ -453,6 +456,9 @@
       'onboarding.step1.footerHint': 'Tap to select — no confirm button needed',
 
       // step 2
+      'onboarding.platform.boss': 'Boss Zhipin',
+      'onboarding.platform.linkedin': 'LinkedIn',
+      'onboarding.platform.indeed': 'Indeed',
       'onboarding.step2.title': 'Which platform do you use most?',
       'onboarding.step2.descDetected': 'Detected: you\'re currently on {platform}',
       'onboarding.step2.descDefault': 'Choose your primary job platform',

@@ -25,9 +25,9 @@
   };
 
   const PLATFORMS = [
-    { key: 'boss',     label: 'Boss 直聘',  subKey: 'onboarding.step2.bossSub' },
-    { key: 'linkedin', label: 'LinkedIn',  subKey: 'onboarding.step2.linkedinSub' },
-    { key: 'indeed',   label: 'Indeed',    subKey: 'onboarding.step2.indeedSub' },
+    { key: 'boss',     labelKey: 'onboarding.platform.boss',     subKey: 'onboarding.step2.bossSub',     logo: 'https://www.zhipin.com/favicon.ico' },
+    { key: 'linkedin', labelKey: 'onboarding.platform.linkedin', subKey: 'onboarding.step2.linkedinSub', logo: 'https://www.linkedin.com/favicon.ico' },
+    { key: 'indeed',   labelKey: 'onboarding.platform.indeed',   subKey: 'onboarding.step2.indeedSub',   logo: 'https://www.indeed.com/favicon.ico' },
   ];
 
   // ── 各平台 step 4 指引(URL / 登录方式 / 常见问题提示)─────────
@@ -36,7 +36,7 @@
   function getPlatformGuides() {
     return {
       boss: {
-        label: 'Boss 直聘',
+        label: t('onboarding.platform.boss'),
         loginUrl: 'https://www.zhipin.com/web/user/?ka=header-login',
         homepage: 'https://www.zhipin.com/',
         steps: [
@@ -154,12 +154,11 @@
   // ── Step 1:角色 ──────────────────────────────────────────────
   function renderStep1() {
     const cards = [
-      { v: 'jobseeker', ico: 'JS', tk: 'onboarding.step1.roleJobseeker', dk: 'onboarding.step1.roleJobseekerDesc' },
-      { v: 'recruiter', ico: 'HR', tk: 'onboarding.step1.roleRecruiter', dk: 'onboarding.step1.roleRecruiterDesc' },
+      { v: 'jobseeker', tk: 'onboarding.step1.roleJobseeker', dk: 'onboarding.step1.roleJobseekerDesc' },
+      { v: 'recruiter', tk: 'onboarding.step1.roleRecruiter', dk: 'onboarding.step1.roleRecruiterDesc' },
     ];
     const html = cards.map(c => `
       <div class="ob-option-card ${state.role === c.v ? 'selected' : ''}" data-role="${c.v}">
-        <span class="ob-option-ico" aria-hidden="true">${c.ico}</span>
         <div class="ob-option-text">
           <div class="ob-option-title">${t(c.tk)}</div>
           <div class="ob-option-desc">${t(c.dk)}</div>
@@ -168,7 +167,7 @@
       </div>`).join('');
 
     return `
-      ${renderHood()}
+      ${renderBack()}
       ${renderProgress(1)}
       <div class="ob-body">
         <h2 class="ob-title">${t('onboarding.step1.title')}</h2>
@@ -181,20 +180,22 @@
   // ── Step 2:平台 ──────────────────────────────────────────────
   function renderStep2() {
     const detected = detectCurrentPlatform();   // 异步 + 估算
+    const platformLabels = { boss: t('onboarding.platform.boss'), linkedin: t('onboarding.platform.linkedin'), indeed: t('onboarding.platform.indeed') };
     const html = PLATFORMS.map(p => `
       <div class="ob-option-card ${state.platform === p.key ? 'selected' : ''}" data-plat="${p.key}">
-        <span class="ob-option-ico"><span class="ob-platform-dot ${p.key}" aria-hidden="true"></span></span>
+        <span class="ob-option-ico">
+          <img class="ob-platform-logo" src="${p.logo}" alt="" aria-hidden="true">
+        </span>
         <div class="ob-option-text">
-          <div class="ob-option-title">${escapeText(p.label)}</div>
+          <div class="ob-option-title">${escapeText(t(p.labelKey))}</div>
           <div class="ob-option-desc">${t(p.subKey)}</div>
         </div>
         <span class="ob-option-radio">✓</span>
       </div>`).join('');
     const detectMsg = detected
-      ? t('onboarding.step2.descDetected', { platform: escapeText(({ boss: 'Boss 直聘', linkedin: 'LinkedIn', indeed: 'Indeed' })[detected] || '') })
+      ? t('onboarding.step2.descDetected', { platform: escapeText(platformLabels[detected] || '') })
       : t('onboarding.step2.descDefault');
     return `
-      ${renderHood()}
       ${renderBack()}
       ${renderProgress(2)}
       <div class="ob-body">
@@ -213,7 +214,6 @@
       ? t('onboarding.step3.descSignup')
       : t('onboarding.step3.descSignin');
     return `
-      ${renderHood()}
       ${state.loginFirst ? '' : renderBack()}
       ${state.loginFirst ? '' : renderProgress(2)}
       <div class="ob-body">
@@ -253,8 +253,7 @@
           ${mode === 'signup' ? t('onboarding.step3.termsSignup') : t('onboarding.step3.termsSignin')}《<a href="https://job.joyhouse.chat/legal/terms" target="_blank" rel="noopener">${t('onboarding.step3.terms')}</a>》
           与《<a href="https://job.joyhouse.chat/legal/privacy" target="_blank" rel="noopener">${t('onboarding.step3.privacy')}</a>》
         </p>
-      </div>
-      ${renderFooter(t('onboarding.step3.footer'), mode === 'signup' ? t('onboarding.step3.footerSignup') : t('onboarding.step3.footerSignin'))}`;
+      </div>`;
   }
 
   // ── SmartJob 前置登录验证码页 ─────────────────────────────────
@@ -262,7 +261,6 @@
     const target = state.accountEmail ? maskEmail(state.accountEmail) : t('onboarding.step3c.desc').replace(' {email}', '');
     const cooldownLeft = Math.max(0, Math.ceil((state.cooldownEnds - Date.now()) / 1000));
     return `
-      ${renderHood()}
       ${renderBack()}
       ${state.loginFirst ? '' : renderProgress(2)}
       <div class="ob-body">
@@ -292,8 +290,7 @@
             ${cooldownLeft > 0 ? t('onboarding.step3c.resendCooldown', { n: cooldownLeft }) : t('onboarding.step3c.resend')}
           </button>
         </div>
-      </div>
-      ${renderFooter(t('onboarding.step3c.footer'), t('onboarding.step3c.footerHint'))}`;
+      </div>`;
   }
 
   // ── Step 3:登录目标平台(按 getPlatformGuides()[state.platform] 渲染)───
@@ -313,7 +310,6 @@
       </div>`).join('');
 
     return `
-      ${renderHood()}
       ${renderBack()}
       ${renderProgress(3)}
       <div class="ob-body">
@@ -366,7 +362,6 @@
   // ── Step 4a:了解你的背景(三种简历/偏好获取方式)──────────────
   function renderStep5a() {
     return `
-      ${renderHood()}
       ${renderBack()}
       ${renderProgress(4)}
       <div class="ob-body">
@@ -434,7 +429,6 @@
     }
     const showActions = st === 'failed' || st === 'timeout';
     return `
-      ${renderHood()}
       ${renderBack()}
       ${renderProgress(4)}
       <div class="ob-body">
@@ -466,7 +460,6 @@
       : `<div class="ob-result-box empty">${t('onboarding.step5c.emptyField')}</div>`;
     const skills = Array.isArray(s.skills) ? s.skills : [];
     return `
-      ${renderHood()}
       ${renderBack()}
       ${renderProgress(4)}
       <div class="ob-body">
@@ -516,13 +509,13 @@
       .join('');
     const isManual = state.bgMethod === 'manual';
     return `
-      ${renderHood()}
       ${renderBack()}
       ${renderProgress(4)}
       <div class="ob-body">
         <span class="ob-mode-chip">${t('onboarding.step5c.modeChip')}</span>
         <h2 class="ob-title">${isManual ? t('onboarding.step5c.formManualTitle') : t('onboarding.step5c.formEditTitle')}</h2>
         <p class="ob-desc">${isManual ? t('onboarding.step5c.formManualDesc') : t('onboarding.step5c.formEditDesc')}</p>
+        <input type="file" id="obResumeInput" accept=".pdf,.doc,.docx" hidden>
         <form id="obPrefsForm" novalidate>
           <div class="ob-field-label">${t('onboarding.step5c.fieldFormRole')}</div>
           <input type="text" class="ob-input" id="obPrefRole" placeholder="${t('onboarding.step5c.placeholderRole')}"
@@ -542,26 +535,52 @@
         <button type="button" class="ob-cta" id="obSavePrefs" ${state.busy ? 'disabled' : ''}>
           ${state.busy ? t('onboarding.step5c.savingBtn') : t('onboarding.step5c.saveBtn')}
         </button>
+        <button type="button" class="ob-cta ob-cta-google" id="obUploadPrefsResume" ${state.busy ? 'disabled' : ''}>
+          ${state.alreadyOnboarded ? t('jobseeker.changeResume') : t('onboarding.step5a.uploadTitle')}
+        </button>
         ${isManual ? '' : `<button type="button" class="ob-cta ob-cta-google" id="obCancelEdit" ${state.busy ? 'disabled' : ''}>${t('onboarding.step5c.cancelBtn')}</button>`}
       </div>
       ${renderFooter(t('onboarding.step5c.formFooter'), t('onboarding.step5c.formFooterHint'))}`;
   }
 
   // ── Step 4 处理逻辑 ───────────────────────────────────────────
-  // Step 3 平台登录完成:仅首次引导的求职者走资料初始化。
-  // 招聘者、或之前已完成过引导的求职者(如「切换角色」重进)直接结束 ——
-  // 资料初始化只在首次引导出现,不再每次重复弹。
+  // Step 3 平台登录完成:招聘者直接结束;求职者每次都进入求职偏好确认。
+  // 非首次用户会先回填已保存偏好,允许手动调整或重新上传简历。
   function completeStep4() {
     if (state.detectTimer) { clearInterval(state.detectTimer); state.detectTimer = null; }
-    if (state.modeSwitchFlow) {
+    if (state.role !== 'jobseeker') {
       finish();
-    } else if (state.role === 'jobseeker' && !state.alreadyOnboarded) {
-      state.step = '5a';
-      state.error = '';
-      render();
-    } else {
-      finish();
+      return;
     }
+    enterPreferencesStep();
+  }
+
+  async function enterPreferencesStep() {
+    state.bgMethod = 'manual';
+    state.prefsEditing = true;
+    state.step = '5c';
+    state.error = '';
+    state.suggestion = { ...(state.suggestion || {}), skills: Array.isArray(state.suggestion?.skills) ? state.suggestion.skills : [] };
+    render();
+
+    try {
+      const [remote, local] = await Promise.all([
+        api.agentGw.userPreferences(state.platform).catch(() => null),
+        chrome.storage.local.get(['jobseeker']).catch(() => ({})),
+      ]);
+      const saved = (remote && remote.ok && remote.data) || local?.jobseeker?.preferences || null;
+      if (saved && (saved.job_role || saved.city || saved.salary_range || saved.notes)) {
+        state.suggestion = {
+          ...(state.suggestion || {}),
+          job_role: saved.job_role || '',
+          city: saved.city || '',
+          salary_range: saved.salary_range || '',
+          notes: saved.notes || '',
+          skills: Array.isArray(state.suggestion?.skills) ? state.suggestion.skills : [],
+        };
+        if (state.step === '5c' && state.prefsEditing) render();
+      }
+    } catch (_) {}
   }
 
   function chooseBackground(method) {
@@ -796,11 +815,23 @@
       '3c': renderStep3c, 4: renderStep4,
       '5a': renderStep5a, '5b': renderStep5b, '5c': renderStep5c,
     })[state.step];
-    mask.innerHTML = `<article class="ob-card">${fn()}</article>`;
+    mask.innerHTML = `<article class="ob-card">
+      <button class="ob-lang" id="obLang" type="button">${window.DQI18N?.getLocale?.() === 'zh' ? 'EN' : '中'}</button>
+      ${fn()}
+    </article>`;
     bind();
   }
 
   function bind() {
+    const langBtn = mask.querySelector('#obLang');
+    if (langBtn) {
+      langBtn.title = window.DQI18N?.getLocale?.() === 'zh' ? 'Switch to English' : '切换为中文';
+      langBtn.addEventListener('click', async () => {
+        const next = window.DQI18N?.getLocale?.() === 'zh' ? 'en' : 'zh';
+        await window.DQI18N?.setLocale?.(next);
+        render();
+      });
+    }
     mask.querySelector('#obBack')?.addEventListener('click', back);
     mask.querySelector('#obHome')?.addEventListener('click', goHomeFromWizard);
     mask.querySelector('#obSettings')?.addEventListener('click', () => {
@@ -887,6 +918,9 @@
     mask.querySelector('#obToManual')?.addEventListener('click', toManualFromStep5b);
     // step 4c — 确认 / 编辑 / 保存
     mask.querySelector('#obConfirmPrefs')?.addEventListener('click', confirmPrefs);
+    mask.querySelector('#obUploadPrefsResume')?.addEventListener('click', () => {
+      mask.querySelector('#obResumeInput')?.click();
+    });
     mask.querySelector('#obEditPrefs')?.addEventListener('click', () => {
       state.prefsEditing = true;
       state.error = '';
@@ -915,6 +949,11 @@
   }
 
   function back() {
+    if (state.step === 1) {
+      close();
+      try { window.DQ.app?.switchTab?.('chat'); } catch (_) {}
+      return;
+    }
     if (state.step === 2) state.step = 1;
     else if (state.step === 3) state.step = 2;
     else if (state.step === '3c') state.step = 3;
@@ -942,11 +981,6 @@
   function afterAccountReady() {
     state.loginFirst = false;
     state.modeSwitchFlow = false;
-    if (state.alreadyOnboarded) {
-      close();
-      try { window.DQ.app?.switchTab?.('chat'); } catch (_) {}
-      return;
-    }
     if (state.role && state.platform) {
       state.step = 4;
       startPlatformDetect();
